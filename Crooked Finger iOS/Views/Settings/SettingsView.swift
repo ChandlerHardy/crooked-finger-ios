@@ -15,30 +15,38 @@ struct SettingsView: View {
         Form {
             Section("App Settings") {
                 Toggle("Notifications", isOn: $notificationsEnabled)
+                    .tint(Color.primaryBrown)
                 Toggle("Haptic Feedback", isOn: $hapticFeedback)
+                    .tint(Color.primaryBrown)
             }
 
             Section("About") {
                 HStack {
                     Text("Version")
+                        .foregroundStyle(Color.appText)
                     Spacer()
                     Text(AppConstants.appVersion)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appMuted)
                 }
 
                 HStack {
                     Text("App Name")
+                        .foregroundStyle(Color.appText)
                     Spacer()
                     Text(AppConstants.appName)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appMuted)
                 }
             }
 
             Section {
                 Link("Privacy Policy", destination: URL(string: "https://crookedfinger.chandlerhardy.com")!)
+                    .foregroundStyle(Color.primaryBrown)
                 Link("Terms of Service", destination: URL(string: "https://crookedfinger.chandlerhardy.com")!)
+                    .foregroundStyle(Color.primaryBrown)
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(Color.appBackground)
         .navigationTitle("Settings")
     }
 }

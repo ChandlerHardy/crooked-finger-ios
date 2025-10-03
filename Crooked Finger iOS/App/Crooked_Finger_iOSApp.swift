@@ -12,6 +12,8 @@ struct Crooked_Finger_iOSApp: App {
     var body: some Scene {
         WindowGroup {
             TabNavigationView()
+                .background(Color.appBackground)
+                .preferredColorScheme(nil) // Respect system setting
         }
     }
 }

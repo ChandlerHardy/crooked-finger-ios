@@ -18,10 +18,11 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Welcome to")
                         .font(.title3)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appMuted)
                     Text("Crooked Finger")
                         .font(.largeTitle)
                         .fontWeight(.bold)
+                        .foregroundStyle(Color.appText)
                 }
                 .padding(.horizontal)
                 .padding(.top)
@@ -31,12 +32,12 @@ struct HomeView: View {
                     QuickActionCard(
                         title: "New Chat",
                         icon: "message.fill",
-                        color: .blue
+                        color: Color.primaryBrown
                     )
                     QuickActionCard(
                         title: "New Project",
                         icon: "plus.circle.fill",
-                        color: .green
+                        color: Color.primaryBrown
                     )
                 }
                 .padding(.horizontal)
@@ -105,12 +106,17 @@ struct QuickActionCard: View {
             Text(title)
                 .font(.subheadline)
                 .fontWeight(.medium)
+                .foregroundStyle(Color.appText)
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(Color(.systemBackground))
+        .background(Color.appCard)
         .clipShape(RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.appBorder, lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
     }
 }
 
@@ -122,7 +128,7 @@ struct ProjectQuickCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: "folder.fill")
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(Color.primaryBrown)
                 Spacer()
                 Image(systemName: project.isFavorite ? "star.fill" : "star")
                     .foregroundStyle(.yellow)
@@ -131,11 +137,12 @@ struct ProjectQuickCard: View {
 
             Text(project.name)
                 .font(.headline)
+                .foregroundStyle(Color.appText)
                 .lineLimit(1)
 
             Text(project.description)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.appMuted)
                 .lineLimit(2)
 
             HStack {
@@ -143,14 +150,18 @@ struct ProjectQuickCard: View {
                 Spacer()
                 Text(project.difficulty.rawValue.capitalized)
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.appMuted)
             }
         }
         .padding()
         .frame(width: 200)
-        .background(Color(.systemBackground))
+        .background(Color.appCard)
         .clipShape(RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.appBorder, lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
     }
 }
 
@@ -192,19 +203,20 @@ struct ConversationQuickCard: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "message.fill")
-                .foregroundStyle(.blue)
+                .foregroundStyle(Color.primaryBrown)
                 .font(.title3)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(conversation.title)
                     .font(.subheadline)
                     .fontWeight(.medium)
+                    .foregroundStyle(Color.appText)
                     .lineLimit(1)
 
                 if let lastMessage = conversation.messages.last {
                     Text(lastMessage.content)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appMuted)
                         .lineLimit(1)
                 }
             }
@@ -213,12 +225,16 @@ struct ConversationQuickCard: View {
 
             Image(systemName: "chevron.right")
                 .font(.caption)
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(Color.appMuted)
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(Color.appCard)
         .clipShape(RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.appBorder, lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
     }
 }
 

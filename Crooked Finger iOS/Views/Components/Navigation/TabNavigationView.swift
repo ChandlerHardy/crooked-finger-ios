@@ -33,6 +33,7 @@ struct TabNavigationView: View {
             ForEach(TabItem.allCases, id: \.self) { tab in
                 NavigationStack {
                     tabContent(for: tab)
+                        .background(Color.appBackground)
                 }
                 .tabItem {
                     Label(tab.rawValue, systemImage: tab.iconName)
@@ -40,6 +41,7 @@ struct TabNavigationView: View {
                 .tag(tab)
             }
         }
+        .tint(Color.primaryBrown) // Tab bar accent color
     }
 
     @ViewBuilder

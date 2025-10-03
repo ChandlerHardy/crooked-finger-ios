@@ -81,13 +81,14 @@ struct ChatView: View {
                 Button(action: sendMessage) {
                     Image(systemName: "arrow.up.circle.fill")
                         .font(.title2)
-                        .foregroundStyle(messageText.isEmpty ? .gray : .blue)
+                        .foregroundStyle(messageText.isEmpty ? Color.appMuted : Color.primaryBrown)
                 }
                 .disabled(messageText.isEmpty || viewModel.isLoading)
             }
             .padding()
-            .background(Color(.systemBackground))
+            .background(Color.appCard)
         }
+        .background(Color.appBackground)
         .navigationTitle("Chat")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -104,6 +105,9 @@ struct ChatView: View {
     private func sendMessage() {
         guard !messageText.isEmpty else { return }
 
+        // Haptic feedback on send
+        Haptics.impact(.light)
+
         let text = messageText
         messageText = ""
 
@@ -116,37 +120,69 @@ struct ChatView: View {
 // MARK: - Message Row
 struct MessageRow: View {
     let message: ChatMessage
+    @State private var appeared = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             if message.type == .user {
-                Spacer()
+                Spacer(minLength: 60)
             }
 
-            VStack(alignment: message.type == .user ? .trailing : .leading, spacing: 4) {
+            VStack(alignment: message.type == .user ? .trailing : .leading, spacing: 6) {
                 // Use Text with markdown parsing for assistant messages
                 if message.type == .assistant {
+                    HStack(spacing: 8) {
+                        Image(systemName: "sparkles")
+                            .font(.caption)
+                            .foregroundStyle(Color.primaryBrown)
+
+                        Text("Assistant")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundStyle(Color.appMuted)
+                    }
+
                     Text(try! AttributedString(markdown: message.content))
                         .textSelection(.enabled)
-                        .padding(12)
-                        .background(Color(.systemGray5))
-                        .foregroundStyle(.primary)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .padding(14)
+                        .background(Color.appCard)
+                        .foregroundStyle(Color.appText)
+                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18)
+                                .stroke(Color.appBorder, lineWidth: 1)
+                        )
+                        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
                 } else {
                     Text(message.content)
-                        .padding(12)
-                        .background(Color.blue)
+                        .padding(14)
+                        .background(
+                            LinearGradient(
+                                colors: [Color.primaryBrown, Color.primaryBrown.opacity(0.9)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
                         .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                        .shadow(color: Color.primaryBrown.opacity(0.3), radius: 4, y: 2)
                 }
 
                 Text(message.timestamp, style: .time)
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.appMuted)
+                    .padding(.horizontal, 4)
+            }
+            .opacity(appeared ? 1 : 0)
+            .offset(y: appeared ? 0 : 10)
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.3)) {
+                    appeared = true
+                }
             }
 
             if message.type == .assistant {
-                Spacer()
+                Spacer(minLength: 60)
             }
         }
     }

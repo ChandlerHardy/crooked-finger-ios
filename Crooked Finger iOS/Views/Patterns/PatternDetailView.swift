@@ -25,11 +25,12 @@ struct PatternDetailView: View {
                         Text(pattern.name)
                             .font(.title)
                             .fontWeight(.bold)
+                            .foregroundStyle(Color.appText)
 
                         if let description = pattern.description {
                             Text(description)
                                 .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.appMuted)
                         }
                     }
 
@@ -92,6 +93,7 @@ struct PatternDetailView: View {
             }
             .padding()
         }
+        .background(Color.appBackground)
         .navigationTitle("Pattern Details")
         .navigationBarTitleDisplayMode(.inline)
     }

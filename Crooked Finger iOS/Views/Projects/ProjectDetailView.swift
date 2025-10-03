@@ -27,10 +27,11 @@ struct ProjectDetailView: View {
                         Text(project.name)
                             .font(.title)
                             .fontWeight(.bold)
+                            .foregroundStyle(Color.appText)
 
                         Text(project.description)
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.appMuted)
                     }
 
                     Spacer()
@@ -95,6 +96,7 @@ struct ProjectDetailView: View {
             }
             .padding()
         }
+        .background(Color.appBackground)
         .navigationTitle("Project Details")
         .navigationBarTitleDisplayMode(.inline)
     }

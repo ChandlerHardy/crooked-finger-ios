@@ -22,15 +22,44 @@ struct ProjectsView: View {
     }
 
     var body: some View {
-        List {
-            ForEach(filteredProjects) { project in
-                NavigationLink {
-                    ProjectDetailView(project: project)
-                } label: {
-                    ProjectRow(project: project)
+        Group {
+            if filteredProjects.isEmpty {
+                if searchText.isEmpty {
+                    // No projects at all
+                    EmptyStateView(
+                        icon: "folder.badge.plus",
+                        title: "No Projects Yet",
+                        message: "Start your first crochet project and track your progress",
+                        actionTitle: "Create Project",
+                        action: {
+                            // TODO: Show create project sheet
+                        }
+                    )
+                } else {
+                    // No search results
+                    EmptyStateView(
+                        icon: "magnifyingglass",
+                        title: "No Results",
+                        message: "No projects match '\(searchText)'. Try a different search term."
+                    )
+                }
+            } else {
+                List {
+                    ForEach(filteredProjects) { project in
+                        NavigationLink {
+                            ProjectDetailView(project: project)
+                        } label: {
+                            ProjectRow(project: project)
+                        }
+                    }
+                }
+                .scrollContentBackground(.hidden)
+                .refreshable {
+                    // TODO: Refresh projects from backend
                 }
             }
         }
+        .background(Color.appBackground)
         .navigationTitle("Projects")
         .searchable(text: $searchText, prompt: "Search projects")
         .toolbar {
@@ -39,6 +68,7 @@ struct ProjectsView: View {
                     // Add project
                 } label: {
                     Image(systemName: "plus")
+                        .foregroundStyle(Color.primaryBrown)
                 }
             }
         }
@@ -53,18 +83,19 @@ struct ProjectRow: View {
         HStack(spacing: 12) {
             Image(systemName: "folder.fill")
                 .font(.title2)
-                .foregroundStyle(.blue)
+                .foregroundStyle(Color.primaryBrown)
                 .frame(width: 44, height: 44)
-                .background(Color.blue.opacity(0.1))
+                .background(Color.primaryBrown.opacity(0.1))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(project.name)
                     .font(.headline)
+                    .foregroundStyle(Color.appText)
 
                 Text(project.description)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.appMuted)
                     .lineLimit(1)
 
                 HStack(spacing: 8) {
@@ -72,7 +103,7 @@ struct ProjectRow: View {
 
                     Text(project.difficulty.rawValue.capitalized)
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appMuted)
                 }
             }
 
@@ -84,7 +115,16 @@ struct ProjectRow: View {
                     .font(.caption)
             }
         }
-        .padding(.vertical, 4)
+        .padding()
+        .background(Color.appCard)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.appBorder, lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
     }
 }
 

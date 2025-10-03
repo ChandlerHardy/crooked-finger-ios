@@ -22,15 +22,44 @@ struct PatternLibraryView: View {
     }
 
     var body: some View {
-        List {
-            ForEach(filteredPatterns) { pattern in
-                NavigationLink {
-                    PatternDetailView(pattern: pattern)
-                } label: {
-                    PatternRow(pattern: pattern)
+        Group {
+            if filteredPatterns.isEmpty {
+                if searchText.isEmpty {
+                    // No patterns at all
+                    EmptyStateView(
+                        icon: "book.closed",
+                        title: "No Patterns Yet",
+                        message: "Save patterns from the chat or import from YouTube to build your library",
+                        actionTitle: "Start Chatting",
+                        action: {
+                            // TODO: Navigate to chat
+                        }
+                    )
+                } else {
+                    // No search results
+                    EmptyStateView(
+                        icon: "magnifyingglass",
+                        title: "No Results",
+                        message: "No patterns match '\(searchText)'. Try a different search term."
+                    )
+                }
+            } else {
+                List {
+                    ForEach(filteredPatterns) { pattern in
+                        NavigationLink {
+                            PatternDetailView(pattern: pattern)
+                        } label: {
+                            PatternRow(pattern: pattern)
+                        }
+                    }
+                }
+                .scrollContentBackground(.hidden)
+                .refreshable {
+                    // TODO: Refresh patterns from backend
                 }
             }
         }
+        .background(Color.appBackground)
         .navigationTitle("Patterns")
         .searchable(text: $searchText, prompt: "Search patterns")
         .toolbar {
@@ -39,6 +68,7 @@ struct PatternLibraryView: View {
                     // Add pattern
                 } label: {
                     Image(systemName: "plus")
+                        .foregroundStyle(Color.primaryBrown)
                 }
             }
         }
@@ -53,19 +83,20 @@ struct PatternRow: View {
         HStack(spacing: 12) {
             Image(systemName: "book.fill")
                 .font(.title2)
-                .foregroundStyle(.blue)
+                .foregroundStyle(Color.primaryBrown)
                 .frame(width: 44, height: 44)
-                .background(Color.blue.opacity(0.1))
+                .background(Color.primaryBrown.opacity(0.1))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(pattern.name)
                     .font(.headline)
+                    .foregroundStyle(Color.appText)
 
                 if let description = pattern.description {
                     Text(description)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.appMuted)
                         .lineLimit(1)
                 }
 
@@ -75,15 +106,15 @@ struct PatternRow: View {
                             .font(.caption2)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color.blue.opacity(0.1))
-                            .foregroundStyle(.blue)
+                            .background(Color.primaryBrown.opacity(0.1))
+                            .foregroundStyle(Color.primaryBrown)
                             .clipShape(Capsule())
                     }
 
                     ForEach(pattern.tags.prefix(2), id: \.self) { tag in
                         Text(tag)
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.appMuted)
                     }
                 }
             }
@@ -96,7 +127,16 @@ struct PatternRow: View {
                     .font(.caption)
             }
         }
-        .padding(.vertical, 4)
+        .padding()
+        .background(Color.appCard)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.appBorder, lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
     }
 }
 
