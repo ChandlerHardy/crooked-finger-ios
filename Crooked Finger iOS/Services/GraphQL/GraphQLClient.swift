@@ -50,9 +50,6 @@ class GraphQLClient {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        // TODO: Re-enable auth when backend bcrypt is fixed
-        // Auth disabled temporarily - backend bcrypt library has bugs
-        /*
         // Add auth token if available
         if let token = authToken {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -60,8 +57,6 @@ class GraphQLClient {
         } else {
             print("⚠️  GraphQL request WITHOUT auth token")
         }
-        */
-        print("ℹ️  Auth temporarily disabled")
 
         let body: [String: Any] = [
             "query": query,

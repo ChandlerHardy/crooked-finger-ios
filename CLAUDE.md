@@ -38,13 +38,39 @@ Native iOS port of the Crooked Finger web application - a crochet pattern assist
 5. ✅ **Image Viewer** - View pattern diagrams and project photos
 6. ✅ **Settings** - User preferences and app configuration
 
-## Phase 2 Features (Future)
-- Offline mode with local pattern storage
-- Camera integration for progress photos
-- Push notifications for project reminders
-- Pattern sharing with other users
-- Stitch counter widget
-- Apple Watch companion app
+## Backend Infrastructure
+**Shared Backend with Web App** - Oracle Cloud Infrastructure (OCI)
+
+### Server Details
+- **IP**: `150.136.38.166`
+- **SSH**: `ssh ubuntu@150.136.38.166 -i /Users/chandlerhardy/.ssh/ampere.key`
+- **Location**: `/home/ubuntu/crooked-finger/`
+- **Port**: 8001 (backend), 5433 (PostgreSQL external)
+
+### Production URLs
+- **GraphQL API**: https://backend.chandlerhardy.com/crooked-finger/graphql
+- **Health Check**: https://backend.chandlerhardy.com/crooked-finger/health
+- **Web App**: https://crookedfinger.chandlerhardy.com
+
+### Docker Setup
+**Production**: `docker-compose.backend.yml`
+- PostgreSQL 15 (port 5433 external, 5432 internal)
+- FastAPI backend (port 8001)
+- Nginx reverse proxy with Let's Encrypt SSL
+
+**Development**: `docker-compose.dev.yml`
+- Local PostgreSQL (port 5434)
+- For testing without OCI server
+
+### Key Files
+- `backend/Dockerfile` - Python 3.11 with FastAPI + Strawberry GraphQL
+- `backend/requirements.txt` - Python dependencies
+- `backend/.env` - Environment variables (GEMINI_API_KEY, CORS_ORIGINS)
+
+### Critical Notes
+- ⚠️ **GEMINI_API_KEY** must be explicitly added to docker-compose.backend.yml environment section
+- ⚠️ Backend uses `case_sensitive = False` in config.py for env var loading
+- ⚠️ Authentication currently disabled due to bcrypt library bug on OCI
 
 ## Project Structure
 ```
@@ -122,7 +148,8 @@ Crooked Finger iOSUITests/
 5. **Routing**: NavigationStack (vs Next.js routing)
 
 ## Implementation Status
-### ✅ Phase 1 (MVP) - COMPLETED:
+
+### ✅ Phase 1 (MVP) - COMPLETED (Sep 15 - Oct 1, 2025):
 1. ✅ Project structure setup
 2. ✅ GraphQL client integration (lightweight URLSession-based)
 3. ✅ Basic navigation (TabView with 5 tabs)
@@ -132,7 +159,9 @@ Crooked Finger iOSUITests/
 7. ✅ Project list view (with mock data)
 8. ✅ Swift packages added (Apollo iOS, Kingfisher)
 
-### ✅ Phase 2 (UI Polish & Theme) - COMPLETED:
+**Key Achievement**: Established foundational architecture with SwiftUI, MVVM, and GraphQL backend integration.
+
+### ✅ Phase 2 (UI Polish & Theme) - COMPLETED (Sep 28 - Oct 2, 2025):
 1. ✅ ChatViewModel with backend integration
 2. ✅ Pattern detail pages (UI complete, mock data)
 3. ✅ Project detail pages (UI complete, mock data)
@@ -147,20 +176,84 @@ Crooked Finger iOSUITests/
 12. ✅ **Card-style list items** with borders and shadows
 13. ✅ **Message animations** with fade-in effects
 
-### 🔄 Phase 3 - NEXT UP:
-1. ⏳ PatternViewModel with backend integration
-2. ⏳ ProjectViewModel with backend integration
-3. ⏳ AI Usage dashboard integration
-4. ⏳ Local data persistence (SwiftData)
-5. ⏳ Image viewer with zoom/pan
-6. ⏳ YouTube integration (GraphQL ops ready)
+**Key Achievement**: Elevated app from functional MVP to polished, production-ready user experience with custom design system.
 
-### Phase 4 - Future:
-1. Offline mode with sync
-2. Camera integration for project photos
-3. Push notifications
-4. User authentication
-5. Pattern sharing between users
+### ✅ Phase 3 (Backend Integration Complete) - COMPLETED (Oct 1 - Oct 4, 2025):
+1. ✅ PatternViewModel with full backend integration
+2. ✅ ProjectViewModel with full backend integration
+3. ✅ GraphQL CRUD operations (create, read, update, delete)
+4. ✅ Pattern vs Project filtering (notes field logic)
+5. ✅ **User Authentication System**
+   - ✅ Login/Signup UI with SwiftUI forms (LoginView, RegisterView)
+   - ✅ JWT token management with UserDefaults
+   - ✅ AuthViewModel with login/register/logout
+   - ✅ Protected app navigation (LoginView ↔ TabNavigationView)
+   - ✅ Settings screen with logout functionality
+6. ✅ **Backend Authentication Fixed** (Oct 4, 2025)
+   - ✅ Migrated from bcrypt to Argon2 password hashing
+   - ✅ Fixed GraphQL context_getter db session handling
+   - ✅ Removed FastAPI Request.user setter issue
+   - ✅ Deployed to production with working auth
+7. ✅ Error handling and retry logic
+8. ✅ Optimistic UI updates
+9. ⏳ Image upload handling (base64 encoding) - **NOT IMPLEMENTED YET**
+10. ⏳ AI Usage dashboard integration (pending)
+11. ⏳ Local data persistence with SwiftData (pending)
+12. ⏳ Enhanced image viewer with zoom/pan (pending)
+13. ⏳ YouTube integration UI (GraphQL ops ready, pending UI)
+
+**Key Achievement**: Complete authentication system with backend Argon2 migration. App now has secure user login/logout flow.
+
+### 🔄 Phase 4 (Advanced Features & Polish) - NEXT UP (Oct 5 - Oct 20, 2025):
+1. 📸 **Image Upload & Management**
+   - Camera integration for project photos
+   - Base64 encoding for GraphQL upload
+   - Photo library picker with multi-select
+   - Image compression and optimization
+2. 🔐 **Enhanced Security**
+   - Biometric authentication (Face ID/Touch ID)
+   - JWT token refresh mechanism
+   - Keychain storage for sensitive data
+3. 📊 **AI Usage Dashboard**
+   - Display token usage by model
+   - Cost tracking and estimates
+   - Usage history and analytics
+4. 🎨 **Enhanced Features**
+   - Pattern sharing (Share sheet, PDF export, QR codes)
+   - Enhanced chat (model selection, voice input)
+   - Professional diagram viewer with zoom/pan
+   - Project templates and progress tracking
+
+### Phase 5 (Offline-First Architecture) - BACKLOG (Oct 21 - Nov 10, 2025):
+1. SwiftData as single source of truth
+2. Intelligent sync engine with conflict resolution
+3. Background sync with BGTaskScheduler
+4. Network resilience and offline mode
+5. Data management (caching, export/import)
+
+**Key Goal**: Transform app into offline-first architecture for seamless usage regardless of connectivity.
+
+### Phase 6 (Native iOS Platform Features) - BACKLOG (Nov 11 - Dec 5, 2025):
+1. **Widgets**: Stitch counter, active project, AI chat widgets
+2. **Siri Shortcuts**: Voice commands for common actions
+3. **Apple Watch**: Companion app with stitch counter and complications
+4. **Live Activities**: Dynamic Island integration for project progress
+5. **iPad Features**: Split View, Slide Over, Apple Pencil support
+6. **Spotlight**: Index patterns/projects for system-wide search
+
+**Key Goal**: Deep iOS platform integration for premium native experience.
+
+### Phase 7 (Final Polish & App Store Launch) - BACKLOG (Dec 6, 2025 - Jan 15, 2026):
+1. Performance optimization (launch time, memory, battery)
+2. Accessibility compliance (VoiceOver, Dynamic Type, WCAG)
+3. Comprehensive testing (unit, UI, integration, device testing)
+4. Bug fixes and stability (<0.1% crash rate target)
+5. App Store preparation (screenshots, icons, descriptions)
+6. TestFlight beta testing (50-100 users)
+7. Analytics and monitoring setup
+8. App Store submission and launch
+
+**Key Goal**: Production-ready app with App Store approval and public release.
 
 ## Environment Configuration
 Create `Config.swift` for environment variables:
@@ -181,11 +274,83 @@ enum APIConfig {
 - **UI Tests**: Critical user flows (chat, pattern save, project creation)
 - **Manual Testing**: Device testing on iPhone/iPad
 
-## Notes
-- Reuse existing GraphQL schema from web app
-- Backend is already deployed and tested
-- Focus on native iOS UX patterns (swipe actions, haptics, etc.)
-- Consider iPad multitasking support
+## GraphQL Client Implementation Notes
+**Custom URLSession-based client (no Apollo codegen)**
+
+### Pattern vs Project Filtering
+Both use the same backend `CrochetProject` table, differentiated by `notes` field:
+- **Patterns**: `notes == null` (reusable templates)
+- **Projects**: `notes != null` (active work with user notes)
+
+### Important Implementation Details
+```swift
+// ✅ CORRECT: Use native Swift dictionaries for GraphQL variables
+let variables: [String: Any] = [
+    "input": [
+        "title": title,
+        "description": description
+    ]
+]
+
+// ❌ INCORRECT: Don't use Codable structs - causes JSON encoding issues
+```
+
+### Authentication Status
+✅ **FULLY ENABLED** - Authentication system complete (Oct 4, 2025)
+
+**Current Implementation:**
+- JWT token storage in UserDefaults (works, but Keychain recommended for production)
+- Login/Register/Logout flow with AuthViewModel
+- Protected navigation (LoginView ↔ TabNavigationView based on isAuthenticated)
+- Authorization header automatically added to GraphQL requests
+- Backend uses Argon2 password hashing (migrated from bcrypt)
+
+**Test Accounts:**
+- Test account available for development (see private Notion docs)
+
+**Future Enhancements:**
+1. Migrate token storage from UserDefaults to Keychain
+2. Implement JWT token refresh mechanism
+3. Add biometric authentication (Face ID/Touch ID)
+4. Session timeout and auto-logout
+
+## iOS-Specific Features
+**Native capabilities beyond web app:**
+- Pull-to-refresh gestures
+- System color scheme (light/dark mode)
+- Haptic feedback on interactions
+- Native SwiftUI navigation patterns
+- Future: Widgets, Siri Shortcuts, Apple Watch
+
+## Development Workflow
+### Local Development
+```bash
+# Start local PostgreSQL database
+cd /Users/chandlerhardy/repos/crooked-finger
+docker-compose -f docker-compose.dev.yml up -d
+
+# Point iOS app to local backend
+# Update GraphQLClient.swift baseURL to http://localhost:8001
+```
+
+### Testing with Production Backend
+```bash
+# iOS app uses production backend by default
+# baseURL: https://backend.chandlerhardy.com/crooked-finger/graphql
+```
+
+### Common Issues
+**GraphQL variable errors**: Use native Swift dictionaries, not Codable structs
+**Image upload failures**: Not implemented yet - pending Phase 4
+**Login errors**: Ensure backend is running and admin account has Argon2 hash
+
+## Project Roadmap
+See Notion Projects database for detailed phase breakdowns:
+- Phase 1-3: ✅ Complete (MVP, UI Polish, Backend Integration + Auth)
+- Phase 4: 🔄 Next Up (Image Upload, Biometrics, AI Dashboard)
+- Phase 5: ⏳ Backlog (Offline-first, Sync)
+- Phase 6: ⏳ Backlog (Widgets, Watch, Siri)
+- Phase 7: ⏳ Backlog (App Store Launch)
 
 ---
-*Last Updated: October 2025 - iOS Port Initialization*
+*Last Updated: October 4, 2025 - Phase 3 Complete with Full Authentication System*

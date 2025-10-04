@@ -13,12 +13,16 @@ struct Crooked_Finger_iOSApp: App {
 
     var body: some Scene {
         WindowGroup {
-            // TODO: Re-enable auth when backend bcrypt is fixed
-            // Auth temporarily disabled - backend bcrypt library has bugs
-            TabNavigationView()
-                .background(Color.appBackground)
-                .preferredColorScheme(nil) // Respect system setting
-                .environment(authViewModel)
+            Group {
+                if authViewModel.isAuthenticated {
+                    TabNavigationView()
+                } else {
+                    LoginView()
+                }
+            }
+            .background(Color.appBackground)
+            .preferredColorScheme(nil) // Respect system setting
+            .environment(authViewModel)
         }
     }
 }
