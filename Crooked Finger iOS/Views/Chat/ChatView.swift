@@ -101,33 +101,60 @@ struct ChatView: View {
                 .background(Color.appCard)
             }
 
-            // Input Area
+            // Input Area - Claude-style integrated bar
             HStack(spacing: 12) {
-                // Add attachment button (ChatGPT style)
-                Button {
-                    showImagePicker = true
-                } label: {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(Color.primaryBrown)
+                // Left side buttons
+                HStack(spacing: 16) {
+                    // Attachment button
+                    Button {
+                        showImagePicker = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.title3)
+                            .fontWeight(.medium)
+                            .foregroundStyle(Color.appMuted)
+                    }
                 }
 
-                TextField("Ask about crochet patterns...", text: $messageText, axis: .vertical)
-                    .textFieldStyle(.roundedBorder)
+                // Text input
+                TextField("Reply to Assistant", text: $messageText, axis: .vertical)
+                    .font(.body)
                     .lineLimit(1...5)
                     .onSubmit {
                         sendMessage()
                     }
 
-                Button(action: sendMessage) {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(messageText.isEmpty && attachedImages.isEmpty ? Color.appMuted : Color.primaryBrown)
+                Spacer()
+
+                // Right side buttons
+                HStack(spacing: 12) {
+                    // Send button
+                    Button(action: sendMessage) {
+                        Image(systemName: "arrow.up")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 32, height: 32)
+                            .background(
+                                Circle()
+                                    .fill(messageText.isEmpty && attachedImages.isEmpty ? Color.appMuted : Color.primaryBrown)
+                            )
+                    }
+                    .disabled((messageText.isEmpty && attachedImages.isEmpty) || viewModel.isLoading)
                 }
-                .disabled((messageText.isEmpty && attachedImages.isEmpty) || viewModel.isLoading)
             }
-            .padding()
-            .background(Color.appCard)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(Color.appCard)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(Color.appBorder, lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+            .padding(.horizontal)
+            .padding(.bottom, 8)
         }
         .background(Color.appBackground)
         .navigationTitle("Chat")

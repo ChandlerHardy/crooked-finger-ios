@@ -27,6 +27,17 @@ struct SettingsView: View {
                     }
                 }
 
+                NavigationLink {
+                    AIUsageView()
+                } label: {
+                    HStack {
+                        Image(systemName: "chart.bar.fill")
+                            .foregroundStyle(Color.primaryBrown)
+                        Text("AI Usage Dashboard")
+                            .foregroundStyle(Color.appText)
+                    }
+                }
+
                 Button("Log Out") {
                     viewModel.logout()
                 }
