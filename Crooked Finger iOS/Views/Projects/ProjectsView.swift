@@ -8,14 +8,15 @@
 import SwiftUI
 
 struct ProjectsView: View {
-    @State private var projects: [Project] = Project.mockProjects
+    @State private var viewModel = ProjectViewModel()
     @State private var searchText = ""
+    @State private var showCreateSheet = false
 
     var filteredProjects: [Project] {
         if searchText.isEmpty {
-            return projects
+            return viewModel.projects
         }
-        return projects.filter { project in
+        return viewModel.projects.filter { project in
             project.name.localizedCaseInsensitiveContains(searchText) ||
             project.description.localizedCaseInsensitiveContains(searchText)
         }
@@ -23,7 +24,11 @@ struct ProjectsView: View {
 
     var body: some View {
         Group {
-            if filteredProjects.isEmpty {
+            if viewModel.isLoading && viewModel.projects.isEmpty {
+                // Initial loading state
+                ProgressView("Loading projects...")
+                    .foregroundStyle(Color.appMuted)
+            } else if filteredProjects.isEmpty {
                 if searchText.isEmpty {
                     // No projects at all
                     EmptyStateView(
@@ -32,7 +37,7 @@ struct ProjectsView: View {
                         message: "Start your first crochet project and track your progress",
                         actionTitle: "Create Project",
                         action: {
-                            // TODO: Show create project sheet
+                            showCreateSheet = true
                         }
                     )
                 } else {
@@ -47,7 +52,7 @@ struct ProjectsView: View {
                 List {
                     ForEach(filteredProjects) { project in
                         NavigationLink {
-                            ProjectDetailView(project: project)
+                            ProjectDetailView(project: project, viewModel: viewModel)
                         } label: {
                             ProjectRow(project: project)
                         }
@@ -55,7 +60,7 @@ struct ProjectsView: View {
                 }
                 .scrollContentBackground(.hidden)
                 .refreshable {
-                    // TODO: Refresh projects from backend
+                    await viewModel.fetchProjects()
                 }
             }
         }
@@ -65,11 +70,29 @@ struct ProjectsView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    // Add project
+                    showCreateSheet = true
                 } label: {
                     Image(systemName: "plus")
                         .foregroundStyle(Color.primaryBrown)
                 }
+            }
+        }
+        .sheet(isPresented: $showCreateSheet) {
+            CreateProjectSheet(viewModel: viewModel)
+        }
+        .task {
+            // Fetch projects on view appear
+            if viewModel.projects.isEmpty {
+                await viewModel.fetchProjects()
+            }
+        }
+        .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
+            Button("OK") {
+                viewModel.errorMessage = nil
+            }
+        } message: {
+            if let errorMessage = viewModel.errorMessage {
+                Text(errorMessage)
             }
         }
     }
@@ -125,6 +148,80 @@ struct ProjectRow: View {
         .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
+    }
+}
+
+// MARK: - Create Project Sheet
+struct CreateProjectSheet: View {
+    let viewModel: ProjectViewModel
+    @Environment(\.dismiss) var dismiss
+    @State private var name = ""
+    @State private var description = ""
+    @State private var pattern = ""
+    @State private var difficulty: PatternDifficulty = .beginner
+    @State private var notes = ""
+    @State private var isCreating = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Name", text: $name)
+                    TextField("Description", text: $description)
+
+                    Picker("Difficulty", selection: $difficulty) {
+                        ForEach(PatternDifficulty.allCases, id: \.self) { level in
+                            Text(level.rawValue.capitalized).tag(level)
+                        }
+                    }
+                } header: {
+                    Text("Project Details")
+                }
+
+                Section {
+                    TextEditor(text: $pattern)
+                        .frame(minHeight: 100)
+                } header: {
+                    Text("Pattern")
+                } footer: {
+                    Text("The crochet pattern you'll be following")
+                }
+
+                Section {
+                    TextEditor(text: $notes)
+                        .frame(minHeight: 80)
+                } header: {
+                    Text("Notes (Optional)")
+                }
+            }
+            .navigationTitle("New Project")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Create") {
+                        Task {
+                            isCreating = true
+                            let success = await viewModel.createProject(
+                                name: name,
+                                pattern: pattern,
+                                difficulty: difficulty,
+                                notes: notes.isEmpty ? "New project" : notes
+                            )
+                            isCreating = false
+                            if success {
+                                dismiss()
+                            }
+                        }
+                    }
+                    .disabled(name.isEmpty || pattern.isEmpty || isCreating)
+                }
+            }
+        }
     }
 }
 

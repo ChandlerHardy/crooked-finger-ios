@@ -8,13 +8,14 @@
 import Foundation
 
 enum ProjectStatus: String, Codable, CaseIterable {
+    case notStarted = "not-started"
     case planning
     case inProgress = "in-progress"
     case completed
 }
 
 struct Project: Identifiable, Codable {
-    let id: String
+    let id: UUID
     var name: String
     var description: String
     var pattern: String
@@ -26,9 +27,10 @@ struct Project: Identifiable, Codable {
     var createdAt: Date
     var updatedAt: Date
     var isFavorite: Bool
+    var backendId: Int? // ID from backend database
 
     init(
-        id: String = UUID().uuidString,
+        id: UUID = UUID(),
         name: String,
         description: String,
         pattern: String,
@@ -39,7 +41,8 @@ struct Project: Identifiable, Codable {
         notes: String? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
-        isFavorite: Bool = false
+        isFavorite: Bool = false,
+        backendId: Int? = nil
     ) {
         self.id = id
         self.name = name
@@ -53,6 +56,7 @@ struct Project: Identifiable, Codable {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.isFavorite = isFavorite
+        self.backendId = backendId
     }
 }
 

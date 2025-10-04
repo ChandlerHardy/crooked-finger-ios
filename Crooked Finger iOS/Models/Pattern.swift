@@ -31,6 +31,7 @@ struct Pattern: Identifiable, Codable {
     var views: Int
     var downloads: Int
     var createdAt: Date
+    var backendId: Int? // ID from backend database
 
     init(
         id: String = UUID().uuidString,
@@ -49,7 +50,8 @@ struct Pattern: Identifiable, Codable {
         isFavorite: Bool = false,
         views: Int = 0,
         downloads: Int = 0,
-        createdAt: Date = Date()
+        createdAt: Date = Date(),
+        backendId: Int? = nil
     ) {
         self.id = id
         self.name = name
@@ -68,6 +70,7 @@ struct Pattern: Identifiable, Codable {
         self.views = views
         self.downloads = downloads
         self.createdAt = createdAt
+        self.backendId = backendId
     }
 }
 

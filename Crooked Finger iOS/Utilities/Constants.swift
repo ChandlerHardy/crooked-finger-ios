@@ -12,7 +12,7 @@ enum APIConfig {
     static let localGraphqlURL = "http://localhost:8001/crooked-finger/graphql"
 
     #if DEBUG
-    static let currentGraphqlURL = localGraphqlURL
+    static let currentGraphqlURL = graphqlURL  // Use production for now
     #else
     static let currentGraphqlURL = graphqlURL
     #endif

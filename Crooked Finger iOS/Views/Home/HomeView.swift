@@ -181,6 +181,7 @@ struct StatusBadge: View {
 
     private var statusText: String {
         switch status {
+        case .notStarted: return "Not Started"
         case .planning: return "Planning"
         case .inProgress: return "In Progress"
         case .completed: return "Completed"
@@ -189,6 +190,7 @@ struct StatusBadge: View {
 
     private var statusColor: Color {
         switch status {
+        case .notStarted: return .gray
         case .planning: return .orange
         case .inProgress: return .blue
         case .completed: return .green

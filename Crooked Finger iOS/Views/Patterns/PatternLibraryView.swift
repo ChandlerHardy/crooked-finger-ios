@@ -8,14 +8,16 @@
 import SwiftUI
 
 struct PatternLibraryView: View {
-    @State private var patterns: [Pattern] = Pattern.mockPatterns
+    @State private var viewModel = PatternViewModel()
     @State private var searchText = ""
+    @State private var showCreateSheet = false
+    @Environment(\.dismiss) var dismiss
 
     var filteredPatterns: [Pattern] {
         if searchText.isEmpty {
-            return patterns
+            return viewModel.patterns
         }
-        return patterns.filter { pattern in
+        return viewModel.patterns.filter { pattern in
             pattern.name.localizedCaseInsensitiveContains(searchText) ||
             pattern.description?.localizedCaseInsensitiveContains(searchText) ?? false
         }
@@ -23,16 +25,20 @@ struct PatternLibraryView: View {
 
     var body: some View {
         Group {
-            if filteredPatterns.isEmpty {
+            if viewModel.isLoading && viewModel.patterns.isEmpty {
+                // Initial loading state
+                ProgressView("Loading patterns...")
+                    .foregroundStyle(Color.appMuted)
+            } else if filteredPatterns.isEmpty {
                 if searchText.isEmpty {
                     // No patterns at all
                     EmptyStateView(
                         icon: "book.closed",
                         title: "No Patterns Yet",
                         message: "Save patterns from the chat or import from YouTube to build your library",
-                        actionTitle: "Start Chatting",
+                        actionTitle: "Add Pattern",
                         action: {
-                            // TODO: Navigate to chat
+                            showCreateSheet = true
                         }
                     )
                 } else {
@@ -47,7 +53,7 @@ struct PatternLibraryView: View {
                 List {
                     ForEach(filteredPatterns) { pattern in
                         NavigationLink {
-                            PatternDetailView(pattern: pattern)
+                            PatternDetailView(pattern: pattern, viewModel: viewModel)
                         } label: {
                             PatternRow(pattern: pattern)
                         }
@@ -55,7 +61,7 @@ struct PatternLibraryView: View {
                 }
                 .scrollContentBackground(.hidden)
                 .refreshable {
-                    // TODO: Refresh patterns from backend
+                    await viewModel.fetchPatterns()
                 }
             }
         }
@@ -65,11 +71,35 @@ struct PatternLibraryView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    // Add pattern
+                    showCreateSheet = true
                 } label: {
                     Image(systemName: "plus")
                         .foregroundStyle(Color.primaryBrown)
                 }
+            }
+        }
+        .sheet(isPresented: $showCreateSheet) {
+            CreatePatternSheet(viewModel: viewModel)
+        }
+        .task {
+            // Fetch patterns on view appear
+            if viewModel.patterns.isEmpty {
+                await viewModel.fetchPatterns()
+            }
+        }
+        .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
+            Button("Copy Error") {
+                if let errorMessage = viewModel.errorMessage {
+                    UIPasteboard.general.string = errorMessage
+                }
+                viewModel.errorMessage = nil
+            }
+            Button("OK") {
+                viewModel.errorMessage = nil
+            }
+        } message: {
+            if let errorMessage = viewModel.errorMessage {
+                Text(errorMessage)
             }
         }
     }
@@ -137,6 +167,89 @@ struct PatternRow: View {
         .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
+    }
+}
+
+// MARK: - Create Pattern Sheet
+struct CreatePatternSheet: View {
+    let viewModel: PatternViewModel
+    @Environment(\.dismiss) var dismiss
+    @State private var name = ""
+    @State private var notation = ""
+    @State private var instructions = ""
+    @State private var difficulty: PatternDifficulty = .beginner
+    @State private var materials = ""
+    @State private var estimatedTime = ""
+    @State private var isCreating = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Name", text: $name)
+
+                    Picker("Difficulty", selection: $difficulty) {
+                        ForEach(PatternDifficulty.allCases, id: \.self) { level in
+                            Text(level.rawValue.capitalized).tag(level)
+                        }
+                    }
+                } header: {
+                    Text("Pattern Details")
+                }
+
+                Section {
+                    TextEditor(text: $notation)
+                        .frame(minHeight: 100)
+                } header: {
+                    Text("Notation")
+                } footer: {
+                    Text("Abbreviated pattern (e.g., 'Ch 4, 12 dc in ring, sl st')")
+                }
+
+                Section {
+                    TextEditor(text: $instructions)
+                        .frame(minHeight: 80)
+                } header: {
+                    Text("Instructions (Optional)")
+                }
+
+                Section {
+                    TextField("Materials", text: $materials)
+                    TextField("Estimated Time", text: $estimatedTime)
+                } header: {
+                    Text("Additional Info (Optional)")
+                }
+            }
+            .navigationTitle("New Pattern")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        Task {
+                            isCreating = true
+                            let success = await viewModel.savePattern(
+                                name: name,
+                                notation: notation,
+                                instructions: instructions.isEmpty ? nil : instructions,
+                                difficulty: difficulty,
+                                materials: materials.isEmpty ? nil : materials,
+                                estimatedTime: estimatedTime.isEmpty ? nil : estimatedTime
+                            )
+                            isCreating = false
+                            if success {
+                                dismiss()
+                            }
+                        }
+                    }
+                    .disabled(name.isEmpty || notation.isEmpty || isCreating)
+                }
+            }
+        }
     }
 }
 

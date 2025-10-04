@@ -9,11 +9,13 @@ import SwiftUI
 
 struct ProjectDetailView: View {
     let project: Project
+    let viewModel: ProjectViewModel
     @State private var isFavorite: Bool
     @State private var status: ProjectStatus
 
-    init(project: Project) {
+    init(project: Project, viewModel: ProjectViewModel) {
         self.project = project
+        self.viewModel = viewModel
         self._isFavorite = State(initialValue: project.isFavorite)
         self._status = State(initialValue: project.status)
     }
@@ -56,6 +58,17 @@ struct ProjectDetailView: View {
                         }
                     }
                     .pickerStyle(.segmented)
+                    .onChange(of: status) { oldValue, newValue in
+                        // Update backend when status changes
+                        Task {
+                            if let backendId = project.backendId {
+                                await viewModel.updateProject(
+                                    projectId: backendId,
+                                    isCompleted: newValue == .completed
+                                )
+                            }
+                        }
+                    }
                 }
 
                 // Pattern
@@ -104,6 +117,6 @@ struct ProjectDetailView: View {
 
 #Preview {
     NavigationStack {
-        ProjectDetailView(project: Project.mockProjects[0])
+        ProjectDetailView(project: Project.mockProjects[0], viewModel: ProjectViewModel())
     }
 }

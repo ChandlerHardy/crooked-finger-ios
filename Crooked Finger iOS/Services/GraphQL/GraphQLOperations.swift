@@ -34,6 +34,46 @@ enum GraphQLOperations {
     }
     """
 
+    static let getProjects = """
+    query GetProjects {
+        projects {
+            id
+            name
+            patternText
+            translatedText
+            difficultyLevel
+            estimatedTime
+            yarnWeight
+            hookSize
+            notes
+            isCompleted
+            userId
+            createdAt
+            updatedAt
+        }
+    }
+    """
+
+    static let getProject = """
+    query GetProject($projectId: Int!) {
+        project(projectId: $projectId) {
+            id
+            name
+            patternText
+            translatedText
+            difficultyLevel
+            estimatedTime
+            yarnWeight
+            hookSize
+            notes
+            isCompleted
+            userId
+            createdAt
+            updatedAt
+        }
+    }
+    """
+
     // MARK: - Mutations
 
     static let chatWithAssistantEnhanced = """
@@ -75,6 +115,90 @@ enum GraphQLOperations {
             videoId
             thumbnailUrl
             error
+        }
+    }
+    """
+
+    static let createProject = """
+    mutation CreateProject($input: CreateProjectInput!) {
+        createProject(input: $input) {
+            id
+            name
+            patternText
+            translatedText
+            difficultyLevel
+            estimatedTime
+            yarnWeight
+            hookSize
+            notes
+            isCompleted
+            userId
+            createdAt
+            updatedAt
+        }
+    }
+    """
+
+    static let updateProject = """
+    mutation UpdateProject($projectId: Int!, $input: UpdateProjectInput!) {
+        updateProject(projectId: $projectId, input: $input) {
+            id
+            name
+            patternText
+            translatedText
+            difficultyLevel
+            estimatedTime
+            yarnWeight
+            hookSize
+            notes
+            isCompleted
+            userId
+            createdAt
+            updatedAt
+        }
+    }
+    """
+
+    static let deleteProject = """
+    mutation DeleteProject($projectId: Int!) {
+        deleteProject(projectId: $projectId)
+    }
+    """
+
+    static let register = """
+    mutation Register($input: RegisterInput!) {
+        register(input: $input) {
+            user {
+                id
+                email
+                isActive
+                isVerified
+                isAdmin
+                createdAt
+                updatedAt
+                lastLogin
+            }
+            accessToken
+            tokenType
+        }
+    }
+    """
+
+    static let login = """
+    mutation Login($input: LoginInput!) {
+        login(input: $input) {
+            user {
+                id
+                email
+                isActive
+                isVerified
+                isAdmin
+                createdAt
+                updatedAt
+                lastLogin
+            }
+            accessToken
+            tokenType
         }
     }
     """
@@ -147,4 +271,93 @@ struct ExtractedPatternResponse: Decodable {
     let videoId: String?
     let thumbnailUrl: String?
     let error: String?
+}
+
+// MARK: - Project Response Types
+
+struct GetProjectsData: Decodable {
+    let projects: [CrochetProjectResponse]
+}
+
+struct GetProjectData: Decodable {
+    let project: CrochetProjectResponse?
+}
+
+struct CreateProjectData: Decodable {
+    let createProject: CrochetProjectResponse
+}
+
+struct UpdateProjectData: Decodable {
+    let updateProject: CrochetProjectResponse
+}
+
+struct DeleteProjectData: Decodable {
+    let deleteProject: Bool
+}
+
+struct CrochetProjectResponse: Decodable {
+    let id: Int
+    let name: String
+    let patternText: String?
+    let translatedText: String?
+    let difficultyLevel: String?
+    let estimatedTime: String?
+    let yarnWeight: String?
+    let hookSize: String?
+    let notes: String?
+    let isCompleted: Bool
+    let userId: Int
+    let createdAt: String
+    let updatedAt: String
+}
+
+// MARK: - Input Types
+
+struct CreateProjectInput: Encodable {
+    let name: String
+    let patternText: String?
+    let difficultyLevel: String?
+    let estimatedTime: String?
+    let yarnWeight: String?
+    let hookSize: String?
+    let notes: String?
+}
+
+struct UpdateProjectInput: Encodable {
+    let name: String?
+    let patternText: String?
+    let translatedText: String?
+    let difficultyLevel: String?
+    let estimatedTime: String?
+    let yarnWeight: String?
+    let hookSize: String?
+    let notes: String?
+    let isCompleted: Bool?
+}
+
+// MARK: - Auth Response Types
+
+struct RegisterData: Decodable {
+    let register: AuthResponse
+}
+
+struct LoginData: Decodable {
+    let login: AuthResponse
+}
+
+struct AuthResponse: Decodable {
+    let user: UserResponse
+    let accessToken: String
+    let tokenType: String
+}
+
+struct UserResponse: Decodable {
+    let id: Int
+    let email: String
+    let isActive: Bool
+    let isVerified: Bool
+    let isAdmin: Bool
+    let createdAt: String
+    let updatedAt: String
+    let lastLogin: String?
 }

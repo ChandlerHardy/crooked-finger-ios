@@ -14,10 +14,31 @@ class GraphQLClient {
 
     private let endpoint: URL
     private let session: URLSession
+    var authToken: String? {
+        didSet {
+            // Save to UserDefaults when token changes
+            if let token = authToken {
+                UserDefaults.standard.set(token, forKey: "authToken")
+                UserDefaults.standard.synchronize() // Force save
+                print("💾 Token saved to UserDefaults: \(token.prefix(20))...")
+            } else {
+                UserDefaults.standard.removeObject(forKey: "authToken")
+                UserDefaults.standard.synchronize()
+                print("🗑️  Token removed from UserDefaults")
+            }
+        }
+    }
 
     private init() {
         self.endpoint = URL(string: APIConfig.currentGraphqlURL)!
         self.session = URLSession.shared
+        // Load saved token
+        if let savedToken = UserDefaults.standard.string(forKey: "authToken") {
+            self.authToken = savedToken
+            print("📂 Loaded saved token from UserDefaults: \(savedToken.prefix(20))...")
+        } else {
+            print("📂 No saved token in UserDefaults")
+        }
     }
 
     /// Execute a GraphQL query or mutation
@@ -28,6 +49,19 @@ class GraphQLClient {
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        // TODO: Re-enable auth when backend bcrypt is fixed
+        // Auth disabled temporarily - backend bcrypt library has bugs
+        /*
+        // Add auth token if available
+        if let token = authToken {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            print("🔑 GraphQL request with auth token: \(token.prefix(20))...")
+        } else {
+            print("⚠️  GraphQL request WITHOUT auth token")
+        }
+        */
+        print("ℹ️  Auth temporarily disabled")
 
         let body: [String: Any] = [
             "query": query,

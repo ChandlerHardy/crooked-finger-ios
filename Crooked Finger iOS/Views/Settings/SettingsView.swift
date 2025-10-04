@@ -8,11 +8,31 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(AuthViewModel.self) private var authViewModel
     @State private var notificationsEnabled = true
     @State private var hapticFeedback = true
 
     var body: some View {
+        @Bindable var viewModel = authViewModel
+
         Form {
+            Section("Account") {
+                if let user = viewModel.currentUser {
+                    HStack {
+                        Text("Email")
+                            .foregroundStyle(Color.appText)
+                        Spacer()
+                        Text(user.email)
+                            .foregroundStyle(Color.appMuted)
+                    }
+                }
+
+                Button("Log Out") {
+                    viewModel.logout()
+                }
+                .foregroundStyle(.red)
+            }
+
             Section("App Settings") {
                 Toggle("Notifications", isOn: $notificationsEnabled)
                     .tint(Color.primaryBrown)

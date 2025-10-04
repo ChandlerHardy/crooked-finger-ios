@@ -9,10 +9,13 @@ import SwiftUI
 
 struct PatternDetailView: View {
     let pattern: Pattern
+    let viewModel: PatternViewModel
     @State private var isFavorite: Bool
+    @State private var showCreateProjectSheet = false
 
-    init(pattern: Pattern) {
+    init(pattern: Pattern, viewModel: PatternViewModel) {
         self.pattern = pattern
+        self.viewModel = viewModel
         self._isFavorite = State(initialValue: pattern.isFavorite)
     }
 
@@ -96,6 +99,79 @@ struct PatternDetailView: View {
         .background(Color.appBackground)
         .navigationTitle("Pattern Details")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showCreateProjectSheet = true
+                } label: {
+                    Label("Create Project", systemImage: "folder.badge.plus")
+                        .foregroundStyle(Color.primaryBrown)
+                }
+            }
+        }
+        .sheet(isPresented: $showCreateProjectSheet) {
+            CreateProjectFromPatternSheet(pattern: pattern, viewModel: viewModel)
+        }
+    }
+}
+
+// MARK: - Create Project Sheet
+struct CreateProjectFromPatternSheet: View {
+    let pattern: Pattern
+    let viewModel: PatternViewModel
+    @Environment(\.dismiss) var dismiss
+    @State private var projectName: String = ""
+    @State private var isCreating = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Project Name", text: $projectName)
+                } header: {
+                    Text("Create a new project from this pattern")
+                } footer: {
+                    Text("You'll be able to add notes, images, and track progress")
+                }
+
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Pattern: \(pattern.name)")
+                            .font(.headline)
+                        if let difficulty = pattern.difficulty {
+                            Text("Difficulty: \(difficulty.rawValue.capitalized)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("New Project")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Create") {
+                        Task {
+                            isCreating = true
+                            let success = await viewModel.createProjectFromPattern(
+                                pattern,
+                                projectName: projectName.isEmpty ? nil : projectName
+                            )
+                            isCreating = false
+                            if success {
+                                dismiss()
+                            }
+                        }
+                    }
+                    .disabled(isCreating)
+                }
+            }
+        }
     }
 }
 
@@ -121,6 +197,6 @@ struct MetadataRow: View {
 
 #Preview {
     NavigationStack {
-        PatternDetailView(pattern: Pattern.mockPatterns[0])
+        PatternDetailView(pattern: Pattern.mockPatterns[0], viewModel: PatternViewModel())
     }
 }
