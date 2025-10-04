@@ -12,11 +12,17 @@ struct PatternDetailView: View {
     let viewModel: PatternViewModel
     @State private var isFavorite: Bool
     @State private var showCreateProjectSheet = false
+    @State private var showImagePicker = false
+    @State private var selectedImages: [UIImage] = []
+    @State private var patternImages: [String] = []
+    @State private var showImageViewer = false
+    @State private var selectedImageIndex = 0
 
     init(pattern: Pattern, viewModel: PatternViewModel) {
         self.pattern = pattern
         self.viewModel = viewModel
         self._isFavorite = State(initialValue: pattern.isFavorite)
+        self._patternImages = State(initialValue: pattern.images)
     }
 
     var body: some View {
@@ -93,6 +99,46 @@ struct PatternDetailView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                 }
+
+                // Image Gallery
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text("Diagrams & Photos")
+                            .font(.headline)
+
+                        Spacer()
+
+                        Button {
+                            showImagePicker = true
+                        } label: {
+                            Label("Add Photos", systemImage: "photo.badge.plus")
+                                .font(.subheadline)
+                                .foregroundColor(.primaryBrown)
+                        }
+                    }
+
+                    if !patternImages.isEmpty {
+                        Base64ImageGallery(
+                            images: patternImages,
+                            columns: 3,
+                            onImageTap: { index in
+                                selectedImageIndex = index
+                                showImageViewer = true
+                            },
+                            onDeleteImage: { index in
+                                deleteImage(at: index)
+                            }
+                        )
+                    } else {
+                        Text("No photos yet")
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .background(Color(.systemGray6))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                }
             }
             .padding()
         }
@@ -111,6 +157,77 @@ struct PatternDetailView: View {
         }
         .sheet(isPresented: $showCreateProjectSheet) {
             CreateProjectFromPatternSheet(pattern: pattern, viewModel: viewModel)
+        }
+        .sheet(isPresented: $showImagePicker) {
+            ImagePicker(selectedImages: $selectedImages, maxSelection: 10)
+        }
+        .fullScreenCover(isPresented: $showImageViewer) {
+            Base64ImageViewer(images: patternImages, currentIndex: $selectedImageIndex)
+        }
+        .onChange(of: selectedImages) { _, newImages in
+            if !newImages.isEmpty {
+                uploadImages(newImages)
+            }
+        }
+        .onAppear {
+            // Refresh images from the latest pattern data in viewModel
+            if let backendId = pattern.backendId,
+               let updatedPattern = viewModel.patterns.first(where: { $0.backendId == backendId }) {
+                patternImages = updatedPattern.images
+            }
+        }
+    }
+
+    // MARK: - Image Methods
+
+    private func uploadImages(_ images: [UIImage]) {
+        Task {
+            guard let backendId = pattern.backendId else { return }
+
+            // Convert new images to base64
+            let newBase64Images = images.compactMap { ImageService.shared.imageToBase64(image: $0) }
+
+            // Append to existing images
+            var allImages = patternImages
+            allImages.append(contentsOf: newBase64Images)
+
+            // Update backend - patterns use the same updateProject mutation
+            let success = await viewModel.updatePattern(
+                patternId: backendId,
+                images: images
+            )
+
+            if success {
+                await MainActor.run {
+                    patternImages = allImages
+                    selectedImages = []
+                }
+            }
+        }
+    }
+
+    private func deleteImage(at index: Int) {
+        Task {
+            guard let backendId = pattern.backendId else { return }
+
+            // Remove image from array
+            var updatedImages = patternImages
+            updatedImages.remove(at: index)
+
+            // Convert base64 strings back to UIImages for update
+            let uiImages = updatedImages.compactMap { ImageService.shared.base64ToImage(base64String: $0) }
+
+            // Update backend
+            let success = await viewModel.updatePattern(
+                patternId: backendId,
+                images: uiImages
+            )
+
+            if success {
+                await MainActor.run {
+                    patternImages = updatedImages
+                }
+            }
         }
     }
 }

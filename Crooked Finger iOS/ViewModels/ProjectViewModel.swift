@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 
 @MainActor
 @Observable
@@ -15,6 +16,7 @@ class ProjectViewModel {
     var errorMessage: String?
 
     private let client = GraphQLClient.shared
+    private let imageService = ImageService.shared
 
     // MARK: - Fetch Projects
 
@@ -29,13 +31,22 @@ class ProjectViewModel {
 
             // Convert backend response to app models
             projects = response.projects.map { projectResponse in
-                Project(
+                // Parse imageData JSON into images array
+                var images: [String] = []
+                if let imageDataJSON = projectResponse.imageData,
+                   let jsonData = imageDataJSON.data(using: .utf8),
+                   let imageArray = try? JSONDecoder().decode([String].self, from: jsonData) {
+                    images = imageArray
+                }
+
+                return Project(
                     id: UUID(),
                     name: projectResponse.name,
                     description: projectResponse.notes ?? "",
                     pattern: projectResponse.patternText ?? "",
                     status: projectResponse.isCompleted ? .completed : .inProgress,
                     difficulty: mapDifficulty(projectResponse.difficultyLevel),
+                    images: images,
                     notes: projectResponse.notes,
                     isFavorite: false, // Backend doesn't have favorite field
                     backendId: projectResponse.id
@@ -56,7 +67,8 @@ class ProjectViewModel {
         name: String,
         pattern: String,
         difficulty: PatternDifficulty?,
-        notes: String?
+        notes: String?,
+        images: [UIImage] = []
     ) async -> Bool {
         isLoading = true
         errorMessage = nil
@@ -72,14 +84,18 @@ class ProjectViewModel {
         }
 
         do {
-            var input: [String: Any?] = [
+            // Convert images to JSON
+            let imageDataJSON = images.isEmpty ? nil : imageService.imagesToJSON(images: images)
+
+            let input: [String: Any?] = [
                 "name": name,
                 "patternText": pattern,
                 "difficultyLevel": difficulty?.rawValue,
                 "estimatedTime": nil,
                 "yarnWeight": nil,
                 "hookSize": nil,
-                "notes": notes
+                "notes": notes,
+                "imageData": imageDataJSON
             ]
 
             let variables: [String: Any] = [
@@ -124,6 +140,7 @@ class ProjectViewModel {
         pattern: String? = nil,
         difficulty: PatternDifficulty? = nil,
         notes: String? = nil,
+        images: [UIImage]? = nil,
         isCompleted: Bool? = nil
     ) async -> Bool {
         isLoading = true
@@ -142,6 +159,11 @@ class ProjectViewModel {
             }
             if let notes = notes {
                 inputDict["notes"] = notes
+            }
+            if let images = images {
+                // Convert images to JSON
+                let imageDataJSON = imageService.imagesToJSON(images: images)
+                inputDict["imageData"] = imageDataJSON
             }
             if let isCompleted = isCompleted {
                 inputDict["isCompleted"] = isCompleted

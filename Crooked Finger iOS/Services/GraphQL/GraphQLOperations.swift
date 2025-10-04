@@ -46,6 +46,7 @@ enum GraphQLOperations {
             yarnWeight
             hookSize
             notes
+            imageData
             isCompleted
             userId
             createdAt
@@ -66,6 +67,7 @@ enum GraphQLOperations {
             yarnWeight
             hookSize
             notes
+            imageData
             isCompleted
             userId
             createdAt
@@ -131,6 +133,7 @@ enum GraphQLOperations {
             yarnWeight
             hookSize
             notes
+            imageData
             isCompleted
             userId
             createdAt
@@ -151,6 +154,7 @@ enum GraphQLOperations {
             yarnWeight
             hookSize
             notes
+            imageData
             isCompleted
             userId
             createdAt
@@ -305,6 +309,7 @@ struct CrochetProjectResponse: Decodable {
     let yarnWeight: String?
     let hookSize: String?
     let notes: String?
+    let imageData: String?
     let isCompleted: Bool
     let userId: Int
     let createdAt: String
@@ -321,6 +326,7 @@ struct CreateProjectInput: Encodable {
     let yarnWeight: String?
     let hookSize: String?
     let notes: String?
+    let imageData: String?
 }
 
 struct UpdateProjectInput: Encodable {
@@ -332,6 +338,7 @@ struct UpdateProjectInput: Encodable {
     let yarnWeight: String?
     let hookSize: String?
     let notes: String?
+    let imageData: String?
     let isCompleted: Bool?
 }
 

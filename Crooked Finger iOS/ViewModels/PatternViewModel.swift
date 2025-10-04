@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 
 @MainActor
 @Observable
@@ -15,6 +16,7 @@ class PatternViewModel {
     var errorMessage: String?
 
     private let client = GraphQLClient.shared
+    private let imageService = ImageService.shared
 
     // MARK: - Fetch Patterns
 
@@ -36,7 +38,15 @@ class PatternViewModel {
 
             // Convert backend response to Pattern models
             patterns = patternProjects.map { projectResponse in
-                Pattern(
+                // Parse imageData JSON into images array
+                var images: [String] = []
+                if let imageDataJSON = projectResponse.imageData,
+                   let jsonData = imageDataJSON.data(using: .utf8),
+                   let imageArray = try? JSONDecoder().decode([String].self, from: jsonData) {
+                    images = imageArray
+                }
+
+                return Pattern(
                     id: UUID().uuidString,
                     name: projectResponse.name,
                     description: projectResponse.translatedText,
@@ -50,7 +60,7 @@ class PatternViewModel {
                     estimatedTime: projectResponse.estimatedTime,
                     videoId: nil,
                     thumbnailUrl: nil,
-                    images: [],
+                    images: images,
                     isFavorite: false,
                     views: 0,
                     downloads: 0,
@@ -81,7 +91,7 @@ class PatternViewModel {
         errorMessage = nil
 
         do {
-            var input: [String: Any?] = [
+            let input: [String: Any?] = [
                 "name": name,
                 "patternText": notation,
                 "difficultyLevel": difficulty?.rawValue,
@@ -136,6 +146,71 @@ class PatternViewModel {
         }
     }
 
+    // MARK: - Update Pattern
+
+    func updatePattern(
+        patternId: Int,
+        images: [UIImage]? = nil
+    ) async -> Bool {
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            var inputDict: [String: Any] = [:]
+
+            if let images = images {
+                // Convert images to JSON
+                let imageDataJSON = imageService.imagesToJSON(images: images)
+                inputDict["imageData"] = imageDataJSON
+            }
+
+            let variables: [String: Any] = [
+                "projectId": patternId,
+                "input": inputDict
+            ]
+
+            let response: UpdateProjectData = try await client.execute(
+                query: GraphQLOperations.updateProject,
+                variables: variables
+            )
+
+            // Update local pattern
+            if let index = patterns.firstIndex(where: { $0.backendId == patternId }) {
+                // Parse imageData JSON
+                var images: [String] = []
+                if let imageDataJSON = response.updateProject.imageData,
+                   let jsonData = imageDataJSON.data(using: .utf8),
+                   let imageArray = try? JSONDecoder().decode([String].self, from: jsonData) {
+                    images = imageArray
+                }
+
+                patterns[index] = Pattern(
+                    id: patterns[index].id,
+                    name: response.updateProject.name,
+                    description: response.updateProject.translatedText,
+                    difficulty: mapDifficulty(response.updateProject.difficultyLevel),
+                    notation: response.updateProject.patternText ?? "",
+                    instructions: response.updateProject.translatedText,
+                    materials: response.updateProject.yarnWeight,
+                    estimatedTime: response.updateProject.estimatedTime,
+                    images: images,
+                    isFavorite: patterns[index].isFavorite,
+                    createdAt: patterns[index].createdAt,
+                    backendId: response.updateProject.id
+                )
+            }
+
+            isLoading = false
+            return true
+
+        } catch {
+            errorMessage = "Failed to update pattern: \(error.localizedDescription)"
+            print("❌ Error updating pattern: \(error)")
+            isLoading = false
+            return false
+        }
+    }
+
     // MARK: - Delete Pattern
 
     func deletePattern(patternId: Int) async -> Bool {
@@ -179,7 +254,7 @@ class PatternViewModel {
 
         do {
             // Duplicate the pattern as a new project with notes to mark it as active
-            var input: [String: Any?] = [
+            let input: [String: Any?] = [
                 "name": projectName ?? "\(pattern.name) - My Project",
                 "patternText": pattern.notation,
                 "difficultyLevel": pattern.difficulty?.rawValue,

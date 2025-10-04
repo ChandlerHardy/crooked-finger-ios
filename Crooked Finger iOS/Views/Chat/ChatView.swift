@@ -11,6 +11,9 @@ struct ChatView: View {
     @State private var viewModel = ChatViewModel()
     @State private var messageText = ""
     @State private var scrollProxy: ScrollViewProxy?
+    @State private var showImagePicker = false
+    @State private var selectedImages: [UIImage] = []
+    @State private var attachedImages: [UIImage] = []
 
     var body: some View {
         VStack(spacing: 0) {
@@ -69,8 +72,46 @@ struct ChatView: View {
                 .background(Color.orange.opacity(0.1))
             }
 
+            // Image Attachments Preview
+            if !attachedImages.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(Array(attachedImages.enumerated()), id: \.offset) { index, image in
+                            ZStack(alignment: .topTrailing) {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 60, height: 60)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                                Button {
+                                    attachedImages.remove(at: index)
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.white)
+                                        .background(Circle().fill(Color.black.opacity(0.6)))
+                                }
+                                .offset(x: 5, y: -5)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                }
+                .background(Color.appCard)
+            }
+
             // Input Area
             HStack(spacing: 12) {
+                // Add attachment button (ChatGPT style)
+                Button {
+                    showImagePicker = true
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(Color.primaryBrown)
+                }
+
                 TextField("Ask about crochet patterns...", text: $messageText, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
                     .lineLimit(1...5)
@@ -81,9 +122,9 @@ struct ChatView: View {
                 Button(action: sendMessage) {
                     Image(systemName: "arrow.up.circle.fill")
                         .font(.title2)
-                        .foregroundStyle(messageText.isEmpty ? Color.appMuted : Color.primaryBrown)
+                        .foregroundStyle(messageText.isEmpty && attachedImages.isEmpty ? Color.appMuted : Color.primaryBrown)
                 }
-                .disabled(messageText.isEmpty || viewModel.isLoading)
+                .disabled((messageText.isEmpty && attachedImages.isEmpty) || viewModel.isLoading)
             }
             .padding()
             .background(Color.appCard)
@@ -100,19 +141,30 @@ struct ChatView: View {
                 }
             }
         }
+        .sheet(isPresented: $showImagePicker) {
+            ImagePicker(selectedImages: $selectedImages, maxSelection: 5)
+        }
+        .onChange(of: selectedImages) { _, newImages in
+            if !newImages.isEmpty {
+                attachedImages.append(contentsOf: newImages)
+                selectedImages = []
+            }
+        }
     }
 
     private func sendMessage() {
-        guard !messageText.isEmpty else { return }
+        guard !messageText.isEmpty || !attachedImages.isEmpty else { return }
 
         // Haptic feedback on send
         Haptics.impact(.light)
 
         let text = messageText
+        let images = attachedImages
         messageText = ""
+        attachedImages = []
 
         Task {
-            await viewModel.sendMessage(text)
+            await viewModel.sendMessage(text, images: images)
         }
     }
 }

@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import UIKit
 
 @MainActor
 @Observable
@@ -16,9 +17,10 @@ class ChatViewModel {
     var errorMessage: String?
 
     private let client = GraphQLClient.shared
+    private let imageService = ImageService.shared
 
     // Send a message to the AI assistant
-    func sendMessage(_ text: String) async {
+    func sendMessage(_ text: String, images: [UIImage] = []) async {
         // Add user message
         let userMessage = ChatMessage(
             type: .user,
@@ -31,11 +33,21 @@ class ChatViewModel {
         errorMessage = nil
 
         do {
+            // Convert images to base64 if any
+            var imageData: String? = nil
+            if !images.isEmpty {
+                imageData = imageService.imagesToJSON(images: images)
+            }
+
             // Call GraphQL mutation
-            let variables: [String: Any] = [
+            var variables: [String: Any] = [
                 "message": text,
                 "context": "crochet_pattern_assistant"
             ]
+
+            if let imageData = imageData {
+                variables["imageData"] = imageData
+            }
 
             let response: ChatWithAssistantData = try await client.execute(
                 query: GraphQLOperations.chatWithAssistantEnhanced,
