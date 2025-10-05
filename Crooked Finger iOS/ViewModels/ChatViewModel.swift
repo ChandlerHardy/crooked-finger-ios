@@ -46,17 +46,26 @@ class ChatViewModel {
         errorMessage = nil
 
         do {
+            // Ensure we have a backend conversation
+            if currentConversation?.backendId == nil {
+                await createBackendConversation()
+            }
+
             // Convert images to base64 if any
             var imageData: String? = nil
             if !images.isEmpty {
                 imageData = imageService.imagesToJSON(images: images)
             }
 
-            // Call GraphQL mutation
+            // Call GraphQL mutation with conversation_id
             var variables: [String: Any] = [
                 "message": text,
                 "context": "crochet_pattern_assistant"
             ]
+
+            if let backendId = currentConversation?.backendId {
+                variables["conversationId"] = backendId
+            }
 
             if let imageData = imageData {
                 variables["imageData"] = imageData
@@ -130,6 +139,13 @@ class ChatViewModel {
 
     // Delete a conversation
     func deleteConversation(_ conversation: Conversation) {
+        // Delete from backend if it has a backend ID
+        if let backendId = conversation.backendId {
+            Task {
+                await deleteBackendConversation(backendId)
+            }
+        }
+
         conversations.removeAll { $0.id == conversation.id }
         saveConversations()
 
@@ -141,6 +157,50 @@ class ChatViewModel {
 
     // MARK: - Private Methods
 
+    private func createBackendConversation() async {
+        guard var current = currentConversation else { return }
+        guard current.backendId == nil else { return } // Already has backend ID
+
+        do {
+            let variables: [String: Any] = [
+                "input": [
+                    "title": current.title
+                ]
+            ]
+
+            let response: CreateConversationData = try await client.execute(
+                query: GraphQLOperations.createConversation,
+                variables: variables
+            )
+
+            // Update local conversation with backend ID
+            current.backendId = response.createConversation.id
+            currentConversation = current
+
+            // Update in conversations list
+            if let index = conversations.firstIndex(where: { $0.id == current.id }) {
+                conversations[index] = current
+            }
+            saveConversations()
+
+        } catch {
+            print("Failed to create backend conversation: \(error)")
+            errorMessage = "Failed to sync conversation"
+        }
+    }
+
+    private func deleteBackendConversation(_ backendId: Int) async {
+        do {
+            let variables: [String: Any] = ["conversationId": backendId]
+            let _: DeleteConversationData = try await client.execute(
+                query: GraphQLOperations.deleteConversation,
+                variables: variables
+            )
+        } catch {
+            print("Failed to delete backend conversation: \(error)")
+        }
+    }
+
     private func saveCurrentConversation() {
         guard var current = currentConversation else { return }
 
@@ -149,8 +209,10 @@ class ChatViewModel {
         current.updatedAt = Date()
 
         // Auto-generate title from first user message if still "New Chat"
+        var titleChanged = false
         if current.title == "New Chat", let firstUserMessage = messages.first(where: { $0.type == .user }) {
             current.title = String(firstUserMessage.content.prefix(50))
+            titleChanged = true
         }
 
         // Update in conversations list
@@ -162,6 +224,28 @@ class ChatViewModel {
 
         currentConversation = current
         saveConversations()
+
+        // Update backend title if changed and we have a backend ID
+        if titleChanged, let backendId = current.backendId {
+            Task {
+                await updateBackendConversationTitle(backendId, title: current.title)
+            }
+        }
+    }
+
+    private func updateBackendConversationTitle(_ backendId: Int, title: String) async {
+        do {
+            let variables: [String: Any] = [
+                "conversationId": backendId,
+                "input": ["title": title]
+            ]
+            let _: UpdateConversationData = try await client.execute(
+                query: GraphQLOperations.updateConversation,
+                variables: variables
+            )
+        } catch {
+            print("Failed to update backend conversation title: \(error)")
+        }
     }
 
     private func loadConversations() {

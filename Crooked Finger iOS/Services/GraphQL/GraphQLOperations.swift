@@ -79,13 +79,71 @@ enum GraphQLOperations {
     // MARK: - Mutations
 
     static let chatWithAssistantEnhanced = """
-    mutation ChatWithAssistantEnhanced($message: String!, $context: String) {
-        chatWithAssistantEnhanced(message: $message, context: $context) {
+    mutation ChatWithAssistantEnhanced($message: String!, $conversationId: Int, $context: String) {
+        chatWithAssistantEnhanced(message: $message, conversationId: $conversationId, context: $context) {
             message
             diagramSvg
             diagramPng
             hasPattern
         }
+    }
+    """
+
+    static let getConversations = """
+    query GetConversations($limit: Int) {
+        conversations(limit: $limit) {
+            id
+            title
+            userId
+            createdAt
+            updatedAt
+            messageCount
+        }
+    }
+    """
+
+    static let getConversation = """
+    query GetConversation($conversationId: Int!) {
+        conversation(conversationId: $conversationId) {
+            id
+            title
+            userId
+            createdAt
+            updatedAt
+            messageCount
+        }
+    }
+    """
+
+    static let createConversation = """
+    mutation CreateConversation($input: CreateConversationInput!) {
+        createConversation(input: $input) {
+            id
+            title
+            userId
+            createdAt
+            updatedAt
+            messageCount
+        }
+    }
+    """
+
+    static let updateConversation = """
+    mutation UpdateConversation($conversationId: Int!, $input: UpdateConversationInput!) {
+        updateConversation(conversationId: $conversationId, input: $input) {
+            id
+            title
+            userId
+            createdAt
+            updatedAt
+            messageCount
+        }
+    }
+    """
+
+    static let deleteConversation = """
+    mutation DeleteConversation($conversationId: Int!) {
+        deleteConversation(conversationId: $conversationId)
     }
     """
 
@@ -367,4 +425,35 @@ struct UserResponse: Decodable {
     let createdAt: String
     let updatedAt: String
     let lastLogin: String?
+}
+
+// MARK: - Conversation Response Types
+
+struct GetConversationsData: Decodable {
+    let conversations: [ConversationResponse]
+}
+
+struct GetConversationData: Decodable {
+    let conversation: ConversationResponse?
+}
+
+struct CreateConversationData: Decodable {
+    let createConversation: ConversationResponse
+}
+
+struct UpdateConversationData: Decodable {
+    let updateConversation: ConversationResponse
+}
+
+struct DeleteConversationData: Decodable {
+    let deleteConversation: Bool
+}
+
+struct ConversationResponse: Decodable {
+    let id: Int
+    let title: String
+    let userId: Int
+    let createdAt: String
+    let updatedAt: String
+    let messageCount: Int
 }

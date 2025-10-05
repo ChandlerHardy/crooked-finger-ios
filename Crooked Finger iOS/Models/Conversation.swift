@@ -9,6 +9,7 @@ import Foundation
 
 struct Conversation: Identifiable, Codable {
     let id: String
+    var backendId: Int? // Backend conversation ID
     var title: String
     var messages: [ChatMessage]
     var createdAt: Date
@@ -16,12 +17,14 @@ struct Conversation: Identifiable, Codable {
 
     init(
         id: String = UUID().uuidString,
+        backendId: Int? = nil,
         title: String,
         messages: [ChatMessage] = [],
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
         self.id = id
+        self.backendId = backendId
         self.title = title
         self.messages = messages
         self.createdAt = createdAt
