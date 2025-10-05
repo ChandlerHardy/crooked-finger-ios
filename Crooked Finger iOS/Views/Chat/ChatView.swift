@@ -15,6 +15,7 @@ struct ChatView: View {
     @State private var selectedImages: [UIImage] = []
     @State private var attachedImages: [UIImage] = []
     @State private var showConversationHistory = false
+    @FocusState private var isInputFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -42,6 +43,11 @@ struct ChatView: View {
                     }
                     .padding()
                 }
+                .contentMargins(.bottom, 8, for: .scrollContent)
+                .onTapGesture {
+                    // Dismiss keyboard when tapping message area
+                    isInputFocused = false
+                }
                 .onAppear {
                     scrollProxy = proxy
                 }
@@ -51,6 +57,10 @@ struct ChatView: View {
                             proxy.scrollTo(lastMessage.id, anchor: .bottom)
                         }
                     }
+                }
+                .task {
+                    // Initialize conversation data in background
+                    await viewModel.initialize()
                 }
             }
 
@@ -119,8 +129,13 @@ struct ChatView: View {
 
                 // Text input
                 TextField("Reply to Assistant", text: $messageText, axis: .vertical)
+                    .textFieldStyle(.plain)
                     .font(.body)
                     .lineLimit(1...5)
+                    .autocorrectionDisabled(false)
+                    .textInputAutocapitalization(.sentences)
+                    .submitLabel(.return)
+                    .focused($isInputFocused)
                     .onSubmit {
                         sendMessage()
                     }
@@ -153,7 +168,6 @@ struct ChatView: View {
                 RoundedRectangle(cornerRadius: 24)
                     .stroke(Color.appBorder, lineWidth: 1)
             )
-            .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
             .padding(.horizontal)
             .padding(.bottom, 8)
         }
@@ -200,8 +214,11 @@ struct ChatView: View {
 
         let text = messageText
         let images = attachedImages
+
+        // Clear input and dismiss keyboard immediately
         messageText = ""
         attachedImages = []
+        isInputFocused = false
 
         Task {
             await viewModel.sendMessage(text, images: images)
@@ -214,38 +231,38 @@ struct MessageRow: View {
     let message: ChatMessage
     @State private var appeared = false
 
+    // Pre-compute markdown once
+    private var markdownContent: AttributedString {
+        (try? AttributedString(markdown: message.content)) ?? AttributedString(message.content)
+    }
+
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            if message.type == .user {
-                Spacer(minLength: 60)
+        if message.type == .assistant {
+            // Assistant: Full-width, no bubble
+            VStack(alignment: .leading, spacing: 8) {
+                Text(markdownContent)
+                    .textSelection(.enabled)
+                    .font(.body)
+                    .foregroundStyle(Color.appText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text(message.timestamp, style: .time)
+                    .font(.caption2)
+                    .foregroundStyle(Color.appMuted)
             }
+            .opacity(appeared ? 1 : 0)
+            .offset(y: appeared ? 0 : 5)
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.15)) {
+                    appeared = true
+                }
+            }
+        } else {
+            // User: Right-aligned bubble
+            HStack(alignment: .top, spacing: 12) {
+                Spacer(minLength: 60)
 
-            VStack(alignment: message.type == .user ? .trailing : .leading, spacing: 6) {
-                // Use Text with markdown parsing for assistant messages
-                if message.type == .assistant {
-                    HStack(spacing: 8) {
-                        Image(systemName: "sparkles")
-                            .font(.caption)
-                            .foregroundStyle(Color.primaryBrown)
-
-                        Text("Assistant")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundStyle(Color.appMuted)
-                    }
-
-                    Text(try! AttributedString(markdown: message.content))
-                        .textSelection(.enabled)
-                        .padding(14)
-                        .background(Color.appCard)
-                        .foregroundStyle(Color.appText)
-                        .clipShape(RoundedRectangle(cornerRadius: 18))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 18)
-                                .stroke(Color.appBorder, lineWidth: 1)
-                        )
-                        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
-                } else {
+                VStack(alignment: .trailing, spacing: 6) {
                     Text(message.content)
                         .padding(14)
                         .background(
@@ -257,24 +274,19 @@ struct MessageRow: View {
                         )
                         .foregroundStyle(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 18))
-                        .shadow(color: Color.primaryBrown.opacity(0.3), radius: 4, y: 2)
-                }
 
-                Text(message.timestamp, style: .time)
-                    .font(.caption2)
-                    .foregroundStyle(Color.appMuted)
-                    .padding(.horizontal, 4)
-            }
-            .opacity(appeared ? 1 : 0)
-            .offset(y: appeared ? 0 : 10)
-            .onAppear {
-                withAnimation(.easeOut(duration: 0.3)) {
-                    appeared = true
+                    Text(message.timestamp, style: .time)
+                        .font(.caption2)
+                        .foregroundStyle(Color.appMuted)
+                        .padding(.horizontal, 4)
                 }
-            }
-
-            if message.type == .assistant {
-                Spacer(minLength: 60)
+                .opacity(appeared ? 1 : 0)
+                .offset(y: appeared ? 0 : 5)
+                .onAppear {
+                    withAnimation(.easeOut(duration: 0.15)) {
+                        appeared = true
+                    }
+                }
             }
         }
     }

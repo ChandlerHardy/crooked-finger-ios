@@ -204,11 +204,21 @@ Crooked Finger iOSUITests/
    - ✅ Patterns: Image upload/view/delete (previously read-only)
    - ✅ Chat: ChatGPT-style "+" button with image attachments (max 5 images)
    - ✅ Nginx configured for 10MB upload limit
-10. ⏳ AI Usage dashboard integration (pending)
-11. ⏳ Local data persistence with SwiftData (pending)
-12. ⏳ YouTube integration UI (GraphQL ops ready, pending UI)
+10. ✅ **Performance Optimizations** (Oct 5, 2025)
+   - ✅ ChatViewModel lazy initialization with async loading
+   - ✅ UserDefaults I/O moved to background threads (Task.detached)
+   - ✅ Removed blocking UserDefaults.synchronize() calls
+   - ✅ Pre-computed markdown rendering (AttributedString cached)
+   - ✅ Tab-based lazy view loading (views only created when visited)
+   - ✅ Static timestamp formatting (removed expensive .relative style)
+   - ✅ Reduced animation durations and removed shadows
+   - ✅ Claude-style chat UI (full-width assistant messages, bubbled user messages)
+   - ✅ Immediate input clearing and keyboard dismissal on send
+11. ⏳ AI Usage dashboard integration (pending)
+12. ⏳ Local data persistence with SwiftData (pending)
+13. ⏳ YouTube integration UI (GraphQL ops ready, pending UI)
 
-**Key Achievement**: Complete authentication system with backend Argon2 migration. Full image support across all features (Projects, Patterns, Chat) with base64 encoding and compression.
+**Key Achievement**: Complete authentication system with backend Argon2 migration. Full image support across all features (Projects, Patterns, Chat) with base64 encoding and compression. Major performance improvements for smooth app startup and responsive keyboard.
 
 ### 🔄 Phase 4 (Advanced Features & Polish) - IN PROGRESS (Oct 5 - Oct 20, 2025):
 1. ✅ **Image Upload & Management** - COMPLETED
@@ -361,4 +371,4 @@ See Notion Projects database for detailed phase breakdowns:
 - Phase 7: ⏳ Backlog (App Store Launch)
 
 ---
-*Last Updated: October 4, 2025 - Phase 4: Image Upload & Management Complete*
+*Last Updated: October 5, 2025 - Performance Optimizations & Chat UI Improvements*

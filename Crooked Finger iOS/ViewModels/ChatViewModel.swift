@@ -17,13 +17,20 @@ class ChatViewModel {
     var messages: [ChatMessage] = []
     var isLoading = false
     var errorMessage: String?
+    private var isInitialized = false
 
     private let client = GraphQLClient.shared
     private let imageService = ImageService.shared
 
     init() {
-        loadConversations()
-        // Start with a new conversation if none exist
+        // Empty init - load data lazily when needed
+    }
+
+    func initialize() async {
+        guard !isInitialized else { return }
+        isInitialized = true
+
+        await loadConversations()
         if conversations.isEmpty {
             createNewConversation()
         } else {
@@ -248,16 +255,25 @@ class ChatViewModel {
         }
     }
 
-    private func loadConversations() {
-        if let data = UserDefaults.standard.data(forKey: "conversations"),
+    private func loadConversations() async {
+        // Perform UserDefaults I/O off main thread
+        let data = await Task.detached {
+            UserDefaults.standard.data(forKey: "conversations")
+        }.value
+
+        if let data = data,
            let decoded = try? JSONDecoder().decode([Conversation].self, from: data) {
             conversations = decoded
         }
     }
 
     private func saveConversations() {
-        if let encoded = try? JSONEncoder().encode(conversations) {
-            UserDefaults.standard.set(encoded, forKey: "conversations")
+        // Perform UserDefaults I/O off main thread
+        let conversationsToSave = conversations
+        Task.detached {
+            if let encoded = try? JSONEncoder().encode(conversationsToSave) {
+                UserDefaults.standard.set(encoded, forKey: "conversations")
+            }
         }
     }
 }

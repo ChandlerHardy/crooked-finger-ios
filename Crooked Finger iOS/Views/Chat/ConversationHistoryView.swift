@@ -107,7 +107,7 @@ struct ConversationRow: View {
                         .font(.caption)
                     Text("•")
                         .font(.caption2)
-                    Text(conversation.updatedAt, style: .relative)
+                    Text(conversation.updatedAt, format: .dateTime.month().day().hour().minute())
                         .font(.caption)
                 }
                 .foregroundStyle(Color.appMuted)

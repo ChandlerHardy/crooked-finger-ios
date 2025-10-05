@@ -19,12 +19,8 @@ class GraphQLClient {
             // Save to UserDefaults when token changes
             if let token = authToken {
                 UserDefaults.standard.set(token, forKey: "authToken")
-                UserDefaults.standard.synchronize() // Force save
-                print("💾 Token saved to UserDefaults: \(token.prefix(20))...")
             } else {
                 UserDefaults.standard.removeObject(forKey: "authToken")
-                UserDefaults.standard.synchronize()
-                print("🗑️  Token removed from UserDefaults")
             }
         }
     }
@@ -33,12 +29,7 @@ class GraphQLClient {
         self.endpoint = URL(string: APIConfig.currentGraphqlURL)!
         self.session = URLSession.shared
         // Load saved token
-        if let savedToken = UserDefaults.standard.string(forKey: "authToken") {
-            self.authToken = savedToken
-            print("📂 Loaded saved token from UserDefaults: \(savedToken.prefix(20))...")
-        } else {
-            print("📂 No saved token in UserDefaults")
-        }
+        self.authToken = UserDefaults.standard.string(forKey: "authToken")
     }
 
     /// Execute a GraphQL query or mutation
@@ -53,9 +44,6 @@ class GraphQLClient {
         // Add auth token if available
         if let token = authToken {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            print("🔑 GraphQL request with auth token: \(token.prefix(20))...")
-        } else {
-            print("⚠️  GraphQL request WITHOUT auth token")
         }
 
         let body: [String: Any] = [

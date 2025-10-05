@@ -27,37 +27,79 @@ enum TabItem: String, CaseIterable {
 
 struct TabNavigationView: View {
     @State private var selectedTab: TabItem = .home
+    @State private var hasVisitedChat = false
+    @State private var hasVisitedPatterns = false
+    @State private var hasVisitedProjects = false
+    @State private var hasVisitedSettings = false
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            ForEach(TabItem.allCases, id: \.self) { tab in
-                NavigationStack {
-                    tabContent(for: tab)
-                        .background(Color.appBackground)
-                }
-                .tabItem {
-                    Label(tab.rawValue, systemImage: tab.iconName)
-                }
-                .tag(tab)
+            NavigationStack {
+                HomeView()
+                    .background(Color.appBackground)
             }
+            .tabItem {
+                Label("Home", systemImage: "house.fill")
+            }
+            .tag(TabItem.home)
+
+            NavigationStack {
+                if hasVisitedChat || selectedTab == .chat {
+                    ChatView()
+                        .background(Color.appBackground)
+                        .onAppear { hasVisitedChat = true }
+                } else {
+                    Color.clear
+                }
+            }
+            .tabItem {
+                Label("Chat", systemImage: "message.fill")
+            }
+            .tag(TabItem.chat)
+
+            NavigationStack {
+                if hasVisitedPatterns || selectedTab == .patterns {
+                    PatternLibraryView()
+                        .background(Color.appBackground)
+                        .onAppear { hasVisitedPatterns = true }
+                } else {
+                    Color.clear
+                }
+            }
+            .tabItem {
+                Label("Patterns", systemImage: "book.fill")
+            }
+            .tag(TabItem.patterns)
+
+            NavigationStack {
+                if hasVisitedProjects || selectedTab == .projects {
+                    ProjectsView()
+                        .background(Color.appBackground)
+                        .onAppear { hasVisitedProjects = true }
+                } else {
+                    Color.clear
+                }
+            }
+            .tabItem {
+                Label("Projects", systemImage: "folder.fill")
+            }
+            .tag(TabItem.projects)
+
+            NavigationStack {
+                if hasVisitedSettings || selectedTab == .settings {
+                    SettingsView()
+                        .background(Color.appBackground)
+                        .onAppear { hasVisitedSettings = true }
+                } else {
+                    Color.clear
+                }
+            }
+            .tabItem {
+                Label("Settings", systemImage: "gearshape.fill")
+            }
+            .tag(TabItem.settings)
         }
         .tint(Color.primaryBrown) // Tab bar accent color
-    }
-
-    @ViewBuilder
-    private func tabContent(for tab: TabItem) -> some View {
-        switch tab {
-        case .home:
-            HomeView()
-        case .chat:
-            ChatView()
-        case .patterns:
-            PatternLibraryView()
-        case .projects:
-            ProjectsView()
-        case .settings:
-            SettingsView()
-        }
     }
 }
 
