@@ -12,12 +12,25 @@ import UIKit
 @MainActor
 @Observable
 class ChatViewModel {
+    var conversations: [Conversation] = []
+    var currentConversation: Conversation?
     var messages: [ChatMessage] = []
     var isLoading = false
     var errorMessage: String?
 
     private let client = GraphQLClient.shared
     private let imageService = ImageService.shared
+
+    init() {
+        loadConversations()
+        // Start with a new conversation if none exist
+        if conversations.isEmpty {
+            createNewConversation()
+        } else {
+            currentConversation = conversations.first
+            messages = currentConversation?.messages ?? []
+        }
+    }
 
     // Send a message to the AI assistant
     func sendMessage(_ text: String, images: [UIImage] = []) async {
@@ -78,16 +91,89 @@ class ChatViewModel {
         }
 
         isLoading = false
+
+        // Save conversation after each message
+        saveCurrentConversation()
     }
 
-    // Clear all messages (new conversation)
-    func clearMessages() {
+    // Create a new conversation
+    func createNewConversation() {
+        // Save current conversation first
+        if let current = currentConversation, !current.messages.isEmpty {
+            saveCurrentConversation()
+        }
+
+        // Create new conversation with auto-generated title
+        let newConversation = Conversation(
+            title: "New Chat",
+            messages: [],
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+
+        currentConversation = newConversation
         messages = []
-        errorMessage = nil
+        conversations.insert(newConversation, at: 0)
+        saveConversations()
     }
 
-    // Load conversation history (from local storage if needed)
+    // Load a specific conversation
     func loadConversation(_ conversation: Conversation) {
+        // Save current conversation first
+        if let current = currentConversation, current.id != conversation.id {
+            saveCurrentConversation()
+        }
+
+        currentConversation = conversation
         messages = conversation.messages
+    }
+
+    // Delete a conversation
+    func deleteConversation(_ conversation: Conversation) {
+        conversations.removeAll { $0.id == conversation.id }
+        saveConversations()
+
+        // If we deleted the current conversation, create a new one
+        if currentConversation?.id == conversation.id {
+            createNewConversation()
+        }
+    }
+
+    // MARK: - Private Methods
+
+    private func saveCurrentConversation() {
+        guard var current = currentConversation else { return }
+
+        // Update conversation with current messages
+        current.messages = messages
+        current.updatedAt = Date()
+
+        // Auto-generate title from first user message if still "New Chat"
+        if current.title == "New Chat", let firstUserMessage = messages.first(where: { $0.type == .user }) {
+            current.title = String(firstUserMessage.content.prefix(50))
+        }
+
+        // Update in conversations list
+        if let index = conversations.firstIndex(where: { $0.id == current.id }) {
+            conversations[index] = current
+        } else {
+            conversations.insert(current, at: 0)
+        }
+
+        currentConversation = current
+        saveConversations()
+    }
+
+    private func loadConversations() {
+        if let data = UserDefaults.standard.data(forKey: "conversations"),
+           let decoded = try? JSONDecoder().decode([Conversation].self, from: data) {
+            conversations = decoded
+        }
+    }
+
+    private func saveConversations() {
+        if let encoded = try? JSONEncoder().encode(conversations) {
+            UserDefaults.standard.set(encoded, forKey: "conversations")
+        }
     }
 }

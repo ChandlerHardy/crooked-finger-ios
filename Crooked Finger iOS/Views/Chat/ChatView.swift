@@ -14,6 +14,7 @@ struct ChatView: View {
     @State private var showImagePicker = false
     @State private var selectedImages: [UIImage] = []
     @State private var attachedImages: [UIImage] = []
+    @State private var showConversationHistory = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -160,16 +161,28 @@ struct ChatView: View {
         .navigationTitle("Chat")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    showConversationHistory = true
+                } label: {
+                    Image(systemName: "line.3.horizontal")
+                        .foregroundStyle(Color.appText)
+                }
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    viewModel.clearMessages()
+                    viewModel.createNewConversation()
                 } label: {
                     Image(systemName: "plus.circle")
+                        .foregroundStyle(Color.appText)
                 }
             }
         }
         .sheet(isPresented: $showImagePicker) {
             ImagePicker(selectedImages: $selectedImages, maxSelection: 5)
+        }
+        .sheet(isPresented: $showConversationHistory) {
+            ConversationHistoryView(viewModel: viewModel, isPresented: $showConversationHistory)
         }
         .onChange(of: selectedImages) { _, newImages in
             if !newImages.isEmpty {
