@@ -28,6 +28,7 @@ struct Project: Identifiable, Codable {
     var updatedAt: Date
     var isFavorite: Bool
     var backendId: Int? // ID from backend database
+    var conversationId: String? // Local conversation ID for project-specific chat
 
     init(
         id: UUID = UUID(),
@@ -42,7 +43,8 @@ struct Project: Identifiable, Codable {
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
         isFavorite: Bool = false,
-        backendId: Int? = nil
+        backendId: Int? = nil,
+        conversationId: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -57,6 +59,7 @@ struct Project: Identifiable, Codable {
         self.updatedAt = updatedAt
         self.isFavorite = isFavorite
         self.backendId = backendId
+        self.conversationId = conversationId
     }
 }
 

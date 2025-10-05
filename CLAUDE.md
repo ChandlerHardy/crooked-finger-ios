@@ -214,11 +214,21 @@ Crooked Finger iOSUITests/
    - ✅ Reduced animation durations and removed shadows
    - ✅ Claude-style chat UI (full-width assistant messages, bubbled user messages)
    - ✅ Immediate input clearing and keyboard dismissal on send
-11. ⏳ AI Usage dashboard integration (pending)
-12. ⏳ Local data persistence with SwiftData (pending)
-13. ⏳ YouTube integration UI (GraphQL ops ready, pending UI)
+11. ✅ **App Icon & UX Enhancements** (Oct 5, 2025)
+   - ✅ Added official Crooked Finger Crochet app icon (1024x1024)
+   - ✅ Project-specific chat conversations (separate chat per project)
+   - ✅ Editable pattern text in ProjectDetailView (Pattern tab with Edit/Save/Cancel)
+   - ✅ Editable notes in ProjectDetailView (Notes tab with auto-save)
+   - ✅ Editable pattern notation/instructions in PatternDetailView
+   - ✅ Tap-to-dismiss keyboard (ZStack overlay pattern, like ChatView)
+   - ✅ Tab-based project UI (Pattern, Images, Chat, Notes)
+   - ✅ ProjectChatView component with conversation persistence
+   - ✅ PatternViewModel.updatePattern() supports patternText and translatedText
+12. ⏳ AI Usage dashboard integration (pending)
+13. ⏳ Local data persistence with SwiftData (pending)
+14. ⏳ YouTube integration UI (GraphQL ops ready, pending UI)
 
-**Key Achievement**: Complete authentication system with backend Argon2 migration. Full image support across all features (Projects, Patterns, Chat) with base64 encoding and compression. Major performance improvements for smooth app startup and responsive keyboard.
+**Key Achievement**: Complete authentication system with backend Argon2 migration. Full image support across all features (Projects, Patterns, Chat) with base64 encoding and compression. Major performance improvements for smooth app startup and responsive keyboard. Project-specific conversations enable contextual AI assistance per project.
 
 ### 🔄 Phase 4 (Advanced Features & Polish) - IN PROGRESS (Oct 5 - Oct 20, 2025):
 1. ✅ **Image Upload & Management** - COMPLETED

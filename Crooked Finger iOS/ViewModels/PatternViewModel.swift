@@ -150,6 +150,8 @@ class PatternViewModel {
 
     func updatePattern(
         patternId: Int,
+        patternText: String? = nil,
+        translatedText: String? = nil,
         images: [UIImage]? = nil
     ) async -> Bool {
         isLoading = true
@@ -157,6 +159,14 @@ class PatternViewModel {
 
         do {
             var inputDict: [String: Any] = [:]
+
+            if let patternText = patternText {
+                inputDict["patternText"] = patternText
+            }
+
+            if let translatedText = translatedText {
+                inputDict["translatedText"] = translatedText
+            }
 
             if let images = images {
                 // Convert images to JSON

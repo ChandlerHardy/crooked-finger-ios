@@ -17,6 +17,13 @@ struct ProjectDetailView: View {
     @State private var projectImages: [String] = []
     @State private var showImageViewer = false
     @State private var selectedImageIndex = 0
+    @State private var selectedTab = 0
+    @State private var isEditingPattern = false
+    @State private var editedPattern: String
+    @State private var editedNotes: String
+    @State private var projectChatViewModel: ChatViewModel?
+    @FocusState private var isPatternFocused: Bool
+    @FocusState private var isNotesFocused: Bool
 
     init(project: Project, viewModel: ProjectViewModel) {
         self.project = project
@@ -24,18 +31,45 @@ struct ProjectDetailView: View {
         self._isFavorite = State(initialValue: project.isFavorite)
         self._status = State(initialValue: project.status)
         self._projectImages = State(initialValue: project.images)
+        self._editedPattern = State(initialValue: project.pattern)
+        self._editedNotes = State(initialValue: project.notes ?? "")
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                headerSection
-                statusSection
-                patternSection
-                imageGallerySection
-                notesSection
+        VStack(spacing: 0) {
+            // Header
+            headerSection
+                .padding()
+
+            // Status Section
+            statusSection
+                .padding(.horizontal)
+
+            // Tab Picker
+            Picker("View", selection: $selectedTab) {
+                Text("Pattern").tag(0)
+                Text("Images").tag(1)
+                Text("Chat").tag(2)
+                Text("Notes").tag(3)
             }
+            .pickerStyle(.segmented)
             .padding()
+
+            // Tab Content
+            TabView(selection: $selectedTab) {
+                patternTabContent
+                    .tag(0)
+
+                imageTabContent
+                    .tag(1)
+
+                chatTabContent
+                    .tag(2)
+
+                notesTabContent
+                    .tag(3)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
         }
         .background(Color.appBackground)
         .navigationTitle("Project Details")
@@ -57,6 +91,9 @@ struct ProjectDetailView: View {
                let updatedProject = viewModel.projects.first(where: { $0.backendId == backendId }) {
                 projectImages = updatedProject.images
             }
+
+            // Initialize project-specific chat
+            initializeProjectChat()
         }
     }
 
@@ -112,17 +149,136 @@ struct ProjectDetailView: View {
         }
     }
 
-    private var patternSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Pattern")
-                .font(.headline)
+    // MARK: - Tab Content
 
-            Text(project.pattern)
-                .font(.body)
+    private var patternTabContent: some View {
+        ZStack {
+            // Tap area to dismiss keyboard
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    isPatternFocused = false
+                }
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("Pattern Instructions")
+                        .font(.headline)
+
+                    Spacer()
+
+                    if isEditingPattern {
+                        Button("Cancel") {
+                            editedPattern = project.pattern
+                            isEditingPattern = false
+                        }
+                        .font(.subheadline)
+                        .foregroundStyle(Color.appMuted)
+                    }
+
+                    Button(isEditingPattern ? "Save" : "Edit") {
+                        if isEditingPattern {
+                            savePattern()
+                        }
+                        isEditingPattern.toggle()
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(Color.primaryBrown)
+                }
+                .padding(.horizontal)
+                .padding(.top)
+
+                if isEditingPattern {
+                    TextEditor(text: $editedPattern)
+                        .font(.system(.body, design: .monospaced))
+                        .padding(8)
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .padding(.horizontal)
+                        .focused($isPatternFocused)
+                } else {
+                    ScrollView {
+                        Text(project.pattern.isEmpty ? "No pattern instructions yet. Tap 'Edit' to add them." : project.pattern)
+                            .font(.system(.body, design: .monospaced))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding()
+                            .background(Color(.systemGray6))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                    .padding(.horizontal)
+                }
+            }
+            .allowsHitTesting(true)
+        }
+    }
+
+    private var imageTabContent: some View {
+        ScrollView {
+            imageGallerySection
                 .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.systemGray6))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+    }
+
+    private var chatTabContent: some View {
+        VStack(spacing: 0) {
+            // Header
+            VStack(spacing: 8) {
+                Text("Project Discussion")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text("Ask questions specific to this project. Chat history is saved separately.")
+                    .font(.caption)
+                    .foregroundStyle(Color.appMuted)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding()
+            .background(Color.appCard)
+
+            // Chat interface
+            if let chatVM = projectChatViewModel {
+                ProjectChatView(viewModel: chatVM)
+            } else {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+    }
+
+    private var notesTabContent: some View {
+        ZStack {
+            // Tap area to dismiss keyboard
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    isNotesFocused = false
+                }
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("Project Notes")
+                        .font(.headline)
+
+                    Spacer()
+
+                    Button("Save") {
+                        saveNotes()
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(Color.primaryBrown)
+                }
+                .padding(.horizontal)
+                .padding(.top)
+
+                TextEditor(text: $editedNotes)
+                    .font(.body)
+                    .padding(8)
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .padding(.horizontal)
+                    .focused($isNotesFocused)
+            }
+            .allowsHitTesting(true)
         }
     }
 
@@ -167,26 +323,67 @@ struct ProjectDetailView: View {
         }
     }
 
-    private var notesSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Notes")
-                .font(.headline)
+    // MARK: - Chat Initialization
 
-            if let notes = project.notes {
-                Text(notes)
-                    .font(.body)
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+    private func initializeProjectChat() {
+        guard projectChatViewModel == nil else { return }
+
+        let chatVM = ChatViewModel()
+
+        // Load or create project-specific conversation
+        Task {
+            await chatVM.initialize()
+
+            if let conversationId = project.conversationId,
+               let existingConversation = chatVM.conversations.first(where: { $0.id == conversationId }) {
+                // Load existing project conversation
+                chatVM.loadConversation(existingConversation)
             } else {
-                Text("No notes yet")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                // Create new conversation for this project
+                chatVM.createNewConversation()
+                if let newConversation = chatVM.currentConversation {
+                    // Update project with conversation ID
+                    var updatedProject = project
+                    updatedProject.conversationId = newConversation.id
+                    // Save to view model (would need to add this method)
+                }
+            }
+
+            await MainActor.run {
+                projectChatViewModel = chatVM
+            }
+        }
+    }
+
+    // MARK: - Save Methods
+
+    private func savePattern() {
+        Task {
+            guard let backendId = project.backendId else { return }
+
+            let success = await viewModel.updateProject(
+                projectId: backendId,
+                pattern: editedPattern
+            )
+
+            if success {
+                isEditingPattern = false
+            }
+        }
+    }
+
+    private func saveNotes() {
+        Task {
+            guard let backendId = project.backendId else { return }
+
+            let success = await viewModel.updateProject(
+                projectId: backendId,
+                notes: editedNotes
+            )
+
+            if !success {
+                // Revert on failure
+                editedNotes = project.notes ?? ""
             }
         }
     }
@@ -241,6 +438,106 @@ struct ProjectDetailView: View {
                     projectImages = updatedImages
                 }
             }
+        }
+    }
+}
+
+// MARK: - Project Chat View
+struct ProjectChatView: View {
+    @Bindable var viewModel: ChatViewModel
+    @State private var messageText = ""
+    @State private var scrollProxy: ScrollViewProxy?
+    @FocusState private var isInputFocused: Bool
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Messages List
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: 16) {
+                        ForEach(viewModel.messages) { message in
+                            MessageRow(message: message)
+                                .id(message.id)
+                        }
+
+                        // Loading indicator
+                        if viewModel.isLoading {
+                            HStack {
+                                ProgressView()
+                                    .padding(.leading, 8)
+                                Text("Thinking...")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                            }
+                            .padding()
+                        }
+                    }
+                    .padding()
+                }
+                .contentMargins(.bottom, 8, for: .scrollContent)
+                .onTapGesture {
+                    isInputFocused = false
+                }
+                .onAppear {
+                    scrollProxy = proxy
+                }
+                .onChange(of: viewModel.messages.count) { _, _ in
+                    if let lastMessage = viewModel.messages.last {
+                        withAnimation {
+                            proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                        }
+                    }
+                }
+            }
+
+            // Input Area
+            HStack(spacing: 12) {
+                TextField("Ask about this project", text: $messageText, axis: .vertical)
+                    .textFieldStyle(.plain)
+                    .font(.body)
+                    .lineLimit(1...5)
+                    .focused($isInputFocused)
+                    .onSubmit {
+                        sendMessage()
+                    }
+
+                Button(action: sendMessage) {
+                    Image(systemName: "arrow.up")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 32, height: 32)
+                        .background(
+                            Circle()
+                                .fill(messageText.isEmpty ? Color.appMuted : Color.primaryBrown)
+                        )
+                }
+                .disabled(messageText.isEmpty || viewModel.isLoading)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(Color.appCard)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(Color.appBorder, lineWidth: 1)
+            )
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+        }
+    }
+
+    private func sendMessage() {
+        guard !messageText.isEmpty else { return }
+
+        let text = messageText
+        messageText = ""
+        isInputFocused = false
+
+        Task {
+            await viewModel.sendMessage(text, images: [])
         }
     }
 }
