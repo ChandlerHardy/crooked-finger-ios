@@ -26,7 +26,7 @@ Native iOS port of the Crooked Finger web application - a crochet pattern assist
 1. **Pattern Translation** - Convert crochet notation to instructions
 2. **AI Chat** - Multi-model Gemini assistant (Pro, Flash Preview, Flash, Flash-Lite)
 3. **Diagram Generation** - matplotlib-based crochet charts (PNG/SVG)
-4. **YouTube Transcripts** - Extract patterns from video tutorials
+4. **YouTube Transcripts** - Extract patterns from video tutorials via RapidAPI (100 requests/month free)
 5. **Pattern Library** - Save, browse, manage patterns
 6. **Project Management** - Track projects with images and notes
 
@@ -69,8 +69,8 @@ Native iOS port of the Crooked Finger web application - a crochet pattern assist
 
 ### Critical Notes
 - ⚠️ **GEMINI_API_KEY** must be explicitly added to docker-compose.backend.yml environment section
+- ⚠️ **RAPIDAPI_KEY** configured for YouTube Transcript3 service (100 requests/month free tier)
 - ⚠️ Backend uses `case_sensitive = False` in config.py for env var loading
-- ⚠️ Authentication currently disabled due to bcrypt library bug on OCI
 
 ## Project Structure
 ```
@@ -221,12 +221,14 @@ Crooked Finger iOSUITests/
    - ✅ Editable notes in ProjectDetailView (Notes tab with auto-save)
    - ✅ Editable pattern notation/instructions in PatternDetailView
    - ✅ Tap-to-dismiss keyboard (ZStack overlay pattern, like ChatView)
-   - ✅ Tab-based project UI (Pattern, Images, Chat, Notes)
-   - ✅ ProjectChatView component with conversation persistence
-   - ✅ PatternViewModel.updatePattern() supports patternText and translatedText
-12. ⏳ AI Usage dashboard integration (pending)
-13. ⏳ Local data persistence with SwiftData (pending)
-14. ⏳ YouTube integration UI (GraphQL ops ready, pending UI)
+12. ✅ **YouTube Transcript Feature via RapidAPI** (Oct 6, 2025) - READY
+   - Backend migrated from youtube-transcript-api to RapidAPI YouTube Transcript3 service
+   - Works from production backend (no IP blocking issues)
+   - Free tier: 100 requests/month
+   - iOS UI ready to re-enable (PatternLibraryView needs YouTube import option restored)
+   - GraphQL mutation `fetchYoutubeTranscript` fully functional
+13. ⏳ AI Usage dashboard integration (pending)
+14. ⏳ Local data persistence with SwiftData (pending)
 
 **Key Achievement**: Complete authentication system with backend Argon2 migration. Full image support across all features (Projects, Patterns, Chat) with base64 encoding and compression. Major performance improvements for smooth app startup and responsive keyboard. Project-specific conversations enable contextual AI assistance per project.
 
@@ -284,13 +286,47 @@ Crooked Finger iOSUITests/
 **Key Goal**: Production-ready app with App Store approval and public release.
 
 ## Environment Configuration
-Create `Config.swift` for environment variables:
+**IMPORTANT: Temporary Backend Configuration (Oct 5, 2025)**
 ```swift
 enum APIConfig {
     static let graphqlURL = "https://backend.chandlerhardy.com/crooked-finger/graphql"
-    static let isProduction = true
+    static let localGraphqlURL = "http://localhost:8001/crooked-finger/graphql"
+
+    #if DEBUG
+    // TODO: Revert to production backend once YouTube IP block clears (24-48 hours)
+    // YouTube is currently blocking production backend IP (150.136.38.166) from transcript requests
+    static let currentGraphqlURL = localGraphqlURL  // TEMPORARY: Using local backend
+    #else
+    static let currentGraphqlURL = graphqlURL
+    #endif
 }
 ```
+
+**Issue**: Production backend IP (150.136.38.166) is temporarily blocked by YouTube due to testing. Local backend works fine.
+
+**Root Cause**: We made ~20 transcript requests in 30 minutes during iOS app testing/debugging on Oct 5, 2025. This triggered YouTube's anti-scraping detection since we're using the unofficial `youtube-transcript-api` library (scraping, not official API).
+
+**Why We Can't Use Official API**: YouTube Data API v3 captions.download requires "permission to edit the video" - only works for videos you own. We need to access random crochet tutorial videos from other creators.
+
+**Workaround**:
+- iOS app (DEBUG builds) temporarily points to local backend via `currentGraphqlURL = localGraphqlURL`
+- iOS app includes "Open in Safari" button to use web app's YouTube transcript page when backend is blocked
+- Production web app also blocked until backend IP clears
+
+**Testing Timeline**:
+- ⏳ **Oct 7, 2025**: Test production backend ONCE to see if block cleared (wait 48 hours minimum)
+- ⏳ **Oct 9, 2025**: If still blocked, test once more (wait another 48 hours)
+- ⚠️ **IMPORTANT**: Do NOT test repeatedly while blocked - this may extend the block duration
+
+**Long-term Solutions** (if block persists beyond Oct 9):
+1. HTTP/SOCKS proxy service with rotating IPs (backend already has `YOUTUBE_PROXY_URL` support)
+2. Deploy backend on fresh OCI instance with new IP
+3. VPN on server (complex - requires split-tunneling to not break incoming traffic)
+
+**TODO**:
+1. After block clears, revert `currentGraphqlURL` back to `graphqlURL` for production backend
+2. Consider keeping Safari button permanently as user fallback option
+3. Document that concentrated testing (>10 requests/hour) will trigger YouTube blocks
 
 ## Dependencies (Swift Package Manager)
 - **Apollo iOS** - GraphQL client

@@ -11,6 +11,7 @@ struct PatternLibraryView: View {
     @State private var viewModel = PatternViewModel()
     @State private var searchText = ""
     @State private var showCreateSheet = false
+    @State private var showYouTubeSheet = false
     @Environment(\.dismiss) var dismiss
 
     var filteredPatterns: [Pattern] {
@@ -35,7 +36,7 @@ struct PatternLibraryView: View {
                     EmptyStateView(
                         icon: "book.closed",
                         title: "No Patterns Yet",
-                        message: "Save patterns from the chat or import from YouTube to build your library",
+                        message: "Save patterns from the chat, import from YouTube, or add them manually",
                         actionTitle: "Add Pattern",
                         action: {
                             showCreateSheet = true
@@ -70,8 +71,18 @@ struct PatternLibraryView: View {
         .searchable(text: $searchText, prompt: "Search patterns")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showCreateSheet = true
+                Menu {
+                    Button {
+                        showCreateSheet = true
+                    } label: {
+                        Label("Add Pattern Manually", systemImage: "plus")
+                    }
+
+                    Button {
+                        showYouTubeSheet = true
+                    } label: {
+                        Label("Import from YouTube", systemImage: "play.rectangle")
+                    }
                 } label: {
                     Image(systemName: "plus")
                         .foregroundStyle(Color.primaryBrown)
@@ -80,6 +91,9 @@ struct PatternLibraryView: View {
         }
         .sheet(isPresented: $showCreateSheet) {
             CreatePatternSheet(viewModel: viewModel)
+        }
+        .sheet(isPresented: $showYouTubeSheet) {
+            YouTubeTranscriptView(patternViewModel: viewModel)
         }
         .task {
             // Fetch patterns on view appear
