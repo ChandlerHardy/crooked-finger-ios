@@ -22,6 +22,8 @@ struct ProjectDetailView: View {
     @State private var editedPattern: String
     @State private var editedNotes: String
     @State private var projectChatViewModel: ChatViewModel?
+    @State private var showDeleteAlert = false
+    @Environment(\.dismiss) var dismiss
     @FocusState private var isPatternFocused: Bool
     @FocusState private var isNotesFocused: Bool
 
@@ -74,6 +76,24 @@ struct ProjectDetailView: View {
         .background(Color.appBackground)
         .navigationTitle("Project Details")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(role: .destructive) {
+                    showDeleteAlert = true
+                } label: {
+                    Image(systemName: "trash")
+                        .foregroundStyle(.red)
+                }
+            }
+        }
+        .alert("Delete Project?", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                deleteProject()
+            }
+        } message: {
+            Text("This project will be permanently deleted. This action cannot be undone.")
+        }
         .sheet(isPresented: $showImagePicker) {
             ImagePicker(selectedImages: $selectedImages, maxSelection: 10)
         }
@@ -102,12 +122,12 @@ struct ProjectDetailView: View {
     private var headerSection: some View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
-                Text(project.name)
+                Text(project.name.cleanedMarkdown)
                     .font(.title)
                     .fontWeight(.bold)
                     .foregroundStyle(Color.appText)
 
-                Text(project.description)
+                Text(project.description.cleanedMarkdown)
                     .font(.subheadline)
                     .foregroundStyle(Color.appMuted)
             }
@@ -198,12 +218,23 @@ struct ProjectDetailView: View {
                         .focused($isPatternFocused)
                 } else {
                     ScrollView {
-                        Text(project.pattern.isEmpty ? "No pattern instructions yet. Tap 'Edit' to add them." : project.pattern)
-                            .font(.system(.body, design: .monospaced))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        if project.pattern.isEmpty {
+                            Text("No pattern instructions yet. Tap 'Edit' to add them.")
+                                .font(.body)
+                                .foregroundStyle(Color.appMuted)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                        } else {
+                            Text(project.pattern.cleanedMarkdown)
+                                .font(.body)
+                                .textSelection(.enabled)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
                     }
                     .padding(.horizontal)
                 }
@@ -351,6 +382,22 @@ struct ProjectDetailView: View {
 
             await MainActor.run {
                 projectChatViewModel = chatVM
+            }
+        }
+    }
+
+    // MARK: - Delete Method
+
+    private func deleteProject() {
+        Task {
+            guard let backendId = project.backendId else { return }
+
+            let success = await viewModel.deleteProject(projectId: backendId)
+
+            if success {
+                await MainActor.run {
+                    dismiss()
+                }
             }
         }
     }

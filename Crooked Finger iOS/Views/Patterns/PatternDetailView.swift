@@ -21,6 +21,8 @@ struct PatternDetailView: View {
     @State private var isEditingInstructions = false
     @State private var editedNotation: String
     @State private var editedInstructions: String
+    @State private var showDeleteAlert = false
+    @Environment(\.dismiss) var dismiss
     @FocusState private var isNotationFocused: Bool
     @FocusState private var isInstructionsFocused: Bool
 
@@ -48,13 +50,13 @@ struct PatternDetailView: View {
                     // Header
                     HStack {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(pattern.name)
+                            Text(pattern.name.cleanedMarkdown)
                                 .font(.title)
                                 .fontWeight(.bold)
                                 .foregroundStyle(Color.appText)
 
                             if let description = pattern.description {
-                                Text(description)
+                                Text(description.cleanedMarkdown)
                                     .font(.subheadline)
                                     .foregroundStyle(Color.appMuted)
                             }
@@ -74,15 +76,38 @@ struct PatternDetailView: View {
                     // Metadata
                     VStack(alignment: .leading, spacing: 12) {
                         if let difficulty = pattern.difficulty {
-                            MetadataRow(label: "Difficulty", value: difficulty.rawValue.capitalized)
+                            HStack {
+                                Text("Difficulty")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Text(difficulty.rawValue.capitalized)
+                                    .font(.subheadline)
+                            }
                         }
 
                         if let materials = pattern.materials {
-                            MetadataRow(label: "Materials", value: materials)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Materials")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(.secondary)
+                                Text(materials.cleanedMarkdown)
+                                    .font(.subheadline)
+                            }
                         }
 
                         if let estimatedTime = pattern.estimatedTime {
-                            MetadataRow(label: "Time", value: estimatedTime)
+                            HStack {
+                                Text("Time")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Text(estimatedTime.cleanedMarkdown)
+                                    .font(.subheadline)
+                            }
                         }
                     }
                     .padding()
@@ -125,12 +150,16 @@ struct PatternDetailView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                                 .focused($isNotationFocused)
                         } else {
-                            Text(pattern.notation)
-                                .font(.system(.body, design: .monospaced))
-                                .padding()
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(Color(.systemGray6))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                            ScrollView {
+                                Text(pattern.notation.cleanedMarkdown)
+                                    .font(.body)
+                                    .textSelection(.enabled)
+                                    .padding()
+                            }
+                            .frame(maxHeight: 300)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(.systemGray6))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                     }
 
@@ -170,13 +199,26 @@ struct PatternDetailView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                                 .focused($isInstructionsFocused)
                         } else {
-                            Text(pattern.instructions?.isEmpty == false ? pattern.instructions! : "No instructions yet. Tap 'Edit' to add them.")
-                                .font(.system(.body, design: .monospaced))
-                                .foregroundStyle(pattern.instructions?.isEmpty == false ? Color.appText : Color.appMuted)
-                                .padding()
+                            if let instructions = pattern.instructions, !instructions.isEmpty {
+                                ScrollView {
+                                    Text(instructions.cleanedMarkdown)
+                                        .font(.body)
+                                        .textSelection(.enabled)
+                                        .padding()
+                                }
+                                .frame(maxHeight: 400)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(Color(.systemGray6))
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
+                            } else {
+                                Text("No instructions yet. Tap 'Edit' to add them.")
+                                    .font(.body)
+                                    .foregroundStyle(Color.appMuted)
+                                    .padding()
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(Color(.systemGray6))
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                            }
                         }
                     }
 
@@ -229,13 +271,33 @@ struct PatternDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showCreateProjectSheet = true
+                Menu {
+                    Button {
+                        showCreateProjectSheet = true
+                    } label: {
+                        Label("Create Project", systemImage: "folder.badge.plus")
+                    }
+
+                    Divider()
+
+                    Button(role: .destructive) {
+                        showDeleteAlert = true
+                    } label: {
+                        Label("Delete Pattern", systemImage: "trash")
+                    }
                 } label: {
-                    Label("Create Project", systemImage: "folder.badge.plus")
+                    Image(systemName: "ellipsis.circle")
                         .foregroundStyle(Color.primaryBrown)
                 }
             }
+        }
+        .alert("Delete Pattern?", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                deletePattern()
+            }
+        } message: {
+            Text("This pattern will be permanently deleted. This action cannot be undone.")
         }
         .sheet(isPresented: $showCreateProjectSheet) {
             CreateProjectFromPatternSheet(pattern: pattern, viewModel: viewModel)
@@ -256,6 +318,22 @@ struct PatternDetailView: View {
             if let backendId = pattern.backendId,
                let updatedPattern = viewModel.patterns.first(where: { $0.backendId == backendId }) {
                 patternImages = updatedPattern.images
+            }
+        }
+    }
+
+    // MARK: - Delete Method
+
+    private func deletePattern() {
+        Task {
+            guard let backendId = pattern.backendId else { return }
+
+            let success = await viewModel.deletePattern(patternId: backendId)
+
+            if success {
+                await MainActor.run {
+                    dismiss()
+                }
             }
         }
     }

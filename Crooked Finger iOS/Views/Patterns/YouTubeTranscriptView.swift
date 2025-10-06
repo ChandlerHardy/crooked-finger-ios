@@ -221,12 +221,17 @@ struct YouTubeTranscriptView: View {
                                     Text("Instructions:")
                                         .font(.caption)
                                         .foregroundStyle(Color.appMuted)
-                                    Text(instructions)
-                                        .font(.caption)
-                                        .padding()
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .background(Color(.systemGray6))
-                                        .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                                    ScrollView {
+                                        Text(instructions.cleanedMarkdown)
+                                            .font(.body)
+                                            .textSelection(.enabled)
+                                            .padding()
+                                    }
+                                    .frame(maxHeight: 400)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(Color(.systemGray6))
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
                                 }
                             }
 
@@ -307,8 +312,8 @@ struct YouTubeTranscriptView: View {
         Task {
             let success = await viewModel.savePatternToLibrary(patternViewModel: patternViewModel)
             if success {
-                // Optionally show success message
                 print("✅ Pattern saved to library")
+                dismiss()
             }
         }
     }
