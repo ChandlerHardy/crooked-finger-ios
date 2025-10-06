@@ -235,35 +235,16 @@ struct YouTubeTranscriptView: View {
                                 }
                             }
 
-                            // Action Buttons
-                            HStack(spacing: 12) {
-                                Button {
-                                    savePattern()
-                                } label: {
-                                    Text("Save to Library")
-                                        .frame(maxWidth: .infinity)
-                                        .padding()
-                                        .background(Color.appCard)
-                                        .foregroundColor(Color.primaryBrown)
-                                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .stroke(Color.primaryBrown, lineWidth: 1)
-                                        )
-                                }
-
-                                Button {
-                                    // Save and dismiss
-                                    savePattern()
-                                    dismiss()
-                                } label: {
-                                    Text("Start Project")
-                                        .frame(maxWidth: .infinity)
-                                        .padding()
-                                        .background(Color.primaryBrown)
-                                        .foregroundColor(.white)
-                                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                                }
+                            // Action Button
+                            Button {
+                                savePattern()
+                            } label: {
+                                Text("Save to Library")
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.primaryBrown)
+                                    .foregroundColor(.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
                             }
                         }
                         .padding()

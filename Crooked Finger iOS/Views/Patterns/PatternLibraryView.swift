@@ -53,10 +53,12 @@ struct PatternLibraryView: View {
             } else {
                 List {
                     ForEach(filteredPatterns) { pattern in
-                        NavigationLink {
-                            PatternDetailView(pattern: pattern, viewModel: viewModel)
-                        } label: {
+                        ZStack {
                             PatternRow(pattern: pattern)
+                            NavigationLink(destination: PatternDetailView(pattern: pattern, viewModel: viewModel)) {
+                                EmptyView()
+                            }
+                            .opacity(0)
                         }
                     }
                 }
@@ -68,6 +70,7 @@ struct PatternLibraryView: View {
         }
         .background(Color.appBackground)
         .navigationTitle("Patterns")
+        .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchText, prompt: "Search patterns")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -124,25 +127,40 @@ struct PatternRow: View {
     let pattern: Pattern
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "book.fill")
-                .font(.title2)
-                .foregroundStyle(Color.primaryBrown)
-                .frame(width: 44, height: 44)
-                .background(Color.primaryBrown.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+        HStack(spacing: 0) {
+            // Thumbnail image or placeholder - full height
+            if let firstImage = pattern.images.first,
+               let imageData = Data(base64Encoded: firstImage),
+               let uiImage = UIImage(data: imageData) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 160)
+                    .clipped()
+            } else {
+                ZStack {
+                    Color.primaryBrown.opacity(0.1)
+                    Image(systemName: "book.fill")
+                        .font(.largeTitle)
+                        .foregroundStyle(Color.primaryBrown)
+                }
+                .frame(width: 160)
+            }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(pattern.name)
                     .font(.headline)
                     .foregroundStyle(Color.appText)
+                    .lineLimit(3)
 
                 if let description = pattern.description {
                     Text(description)
                         .font(.caption)
                         .foregroundStyle(Color.appMuted)
-                        .lineLimit(1)
+                        .lineLimit(2)
                 }
+
+                Spacer()
 
                 HStack(spacing: 8) {
                     if let difficulty = pattern.difficulty {
@@ -162,6 +180,8 @@ struct PatternRow: View {
                     }
                 }
             }
+            .padding(12)
+            .frame(minHeight: 110)
 
             Spacer()
 
@@ -169,9 +189,10 @@ struct PatternRow: View {
                 Image(systemName: "star.fill")
                     .foregroundStyle(.yellow)
                     .font(.caption)
+                    .padding(.trailing, 12)
             }
         }
-        .padding()
+        .frame(maxWidth: .infinity)
         .background(Color.appCard)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
@@ -181,6 +202,7 @@ struct PatternRow: View {
         .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
     }
 }
 

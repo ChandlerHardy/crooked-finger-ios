@@ -27,6 +27,7 @@ enum TabItem: String, CaseIterable {
 
 struct TabNavigationView: View {
     @State private var selectedTab: TabItem = .home
+    @State private var chatViewModel = ChatViewModel()
     @State private var hasVisitedChat = false
     @State private var hasVisitedPatterns = false
     @State private var hasVisitedProjects = false
@@ -35,7 +36,7 @@ struct TabNavigationView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             NavigationStack {
-                HomeView()
+                HomeView(selectedTab: $selectedTab, chatViewModel: chatViewModel)
                     .background(Color.appBackground)
             }
             .tabItem {
@@ -45,7 +46,7 @@ struct TabNavigationView: View {
 
             NavigationStack {
                 if hasVisitedChat || selectedTab == .chat {
-                    ChatView()
+                    ChatView(viewModel: chatViewModel)
                         .background(Color.appBackground)
                         .onAppear { hasVisitedChat = true }
                 } else {
@@ -100,6 +101,9 @@ struct TabNavigationView: View {
             .tag(TabItem.settings)
         }
         .tint(Color.primaryBrown) // Tab bar accent color
+        .task {
+            await chatViewModel.initialize()
+        }
     }
 }
 

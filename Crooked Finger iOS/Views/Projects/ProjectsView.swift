@@ -51,10 +51,12 @@ struct ProjectsView: View {
             } else {
                 List {
                     ForEach(filteredProjects) { project in
-                        NavigationLink {
-                            ProjectDetailView(project: project, viewModel: viewModel)
-                        } label: {
+                        ZStack {
                             ProjectRow(project: project)
+                            NavigationLink(destination: ProjectDetailView(project: project, viewModel: viewModel)) {
+                                EmptyView()
+                            }
+                            .opacity(0)
                         }
                     }
                 }
@@ -66,6 +68,7 @@ struct ProjectsView: View {
         }
         .background(Color.appBackground)
         .navigationTitle("Projects")
+        .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchText, prompt: "Search projects")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -103,23 +106,38 @@ struct ProjectRow: View {
     let project: Project
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "folder.fill")
-                .font(.title2)
-                .foregroundStyle(Color.primaryBrown)
-                .frame(width: 44, height: 44)
-                .background(Color.primaryBrown.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+        HStack(spacing: 0) {
+            // Thumbnail image or placeholder - full height
+            if let firstImage = project.images.first,
+               let imageData = Data(base64Encoded: firstImage),
+               let uiImage = UIImage(data: imageData) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 160)
+                    .clipped()
+            } else {
+                ZStack {
+                    Color.primaryBrown.opacity(0.1)
+                    Image(systemName: "folder.fill")
+                        .font(.largeTitle)
+                        .foregroundStyle(Color.primaryBrown)
+                }
+                .frame(width: 160)
+            }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(project.name)
                     .font(.headline)
                     .foregroundStyle(Color.appText)
+                    .lineLimit(3)
 
                 Text(project.description)
                     .font(.caption)
                     .foregroundStyle(Color.appMuted)
-                    .lineLimit(1)
+                    .lineLimit(2)
+
+                Spacer()
 
                 HStack(spacing: 8) {
                     StatusBadge(status: project.status)
@@ -129,6 +147,8 @@ struct ProjectRow: View {
                         .foregroundStyle(Color.appMuted)
                 }
             }
+            .padding(12)
+            .frame(minHeight: 110)
 
             Spacer()
 
@@ -136,9 +156,10 @@ struct ProjectRow: View {
                 Image(systemName: "star.fill")
                     .foregroundStyle(.yellow)
                     .font(.caption)
+                    .padding(.trailing, 12)
             }
         }
-        .padding()
+        .frame(maxWidth: .infinity)
         .background(Color.appCard)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
@@ -148,6 +169,7 @@ struct ProjectRow: View {
         .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
     }
 }
 

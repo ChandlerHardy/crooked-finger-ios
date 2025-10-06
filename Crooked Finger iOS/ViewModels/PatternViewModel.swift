@@ -85,12 +85,23 @@ class PatternViewModel {
         instructions: String?,
         difficulty: PatternDifficulty?,
         materials: String?,
-        estimatedTime: String?
+        estimatedTime: String?,
+        imageData: String? = nil
     ) async -> Bool {
         isLoading = true
         errorMessage = nil
 
         do {
+            // Convert single image to JSON array format if provided
+            var imageDataJSON: String?
+            if let imageData = imageData {
+                let imageArray = [imageData]
+                if let jsonData = try? JSONEncoder().encode(imageArray),
+                   let jsonString = String(data: jsonData, encoding: .utf8) {
+                    imageDataJSON = jsonString
+                }
+            }
+
             let input: [String: Any?] = [
                 "name": name,
                 "patternText": notation,
@@ -98,7 +109,8 @@ class PatternViewModel {
                 "estimatedTime": estimatedTime,
                 "yarnWeight": materials,
                 "hookSize": nil,
-                "notes": nil
+                "notes": nil,
+                "imageData": imageDataJSON
             ]
 
             let variables: [String: Any] = [
@@ -110,6 +122,15 @@ class PatternViewModel {
                 variables: variables
             )
 
+            // Parse imageData JSON into images array
+            var images: [String] = []
+            if let imageDataJSON = response.createProject.imageData,
+               let jsonData = imageDataJSON.data(using: .utf8),
+               let imageArray = try? JSONDecoder().decode([String].self, from: jsonData) {
+                images = imageArray
+                print("✅ Saved pattern with \(images.count) image(s)")
+            }
+
             // Add new pattern to local list
             let newPattern = Pattern(
                 id: UUID().uuidString,
@@ -120,6 +141,7 @@ class PatternViewModel {
                 instructions: response.createProject.translatedText,
                 materials: response.createProject.yarnWeight,
                 estimatedTime: response.createProject.estimatedTime,
+                images: images,
                 createdAt: ISO8601DateFormatter().date(from: response.createProject.createdAt) ?? Date(),
                 backendId: response.createProject.id
             )

@@ -8,8 +8,23 @@
 import SwiftUI
 
 struct HomeView: View {
-    @State private var recentProjects: [Project] = Project.mockProjects
-    @State private var recentConversations: [Conversation] = Conversation.mockConversations
+    @Binding var selectedTab: TabItem
+    var chatViewModel: ChatViewModel
+    @State private var viewModel = ProjectViewModel()
+    @State private var showNewProjectSheet = false
+    @State private var showConversationHistory = false
+
+    private var recentProjects: [Project] {
+        Array(viewModel.projects.prefix(5))
+    }
+
+    private var recentConversations: [Conversation] {
+        // Sort by most recent and filter out empty conversations
+        let sorted = chatViewModel.conversations
+            .filter { !$0.messages.isEmpty }
+            .sorted { $0.updatedAt > $1.updatedAt }
+        return Array(sorted.prefix(3))
+    }
 
     var body: some View {
         ScrollView {
@@ -25,20 +40,29 @@ struct HomeView: View {
                         .foregroundStyle(Color.appText)
                 }
                 .padding(.horizontal)
-                .padding(.top)
 
                 // Quick Actions
                 HStack(spacing: 16) {
-                    QuickActionCard(
-                        title: "New Chat",
-                        icon: "message.fill",
-                        color: Color.primaryBrown
-                    )
-                    QuickActionCard(
-                        title: "New Project",
-                        icon: "plus.circle.fill",
-                        color: Color.primaryBrown
-                    )
+                    Button {
+                        selectedTab = .chat
+                        chatViewModel.createNewConversation()
+                    } label: {
+                        QuickActionCard(
+                            title: "New Chat",
+                            icon: "message.fill",
+                            color: Color.primaryBrown
+                        )
+                    }
+
+                    Button {
+                        showNewProjectSheet = true
+                    } label: {
+                        QuickActionCard(
+                            title: "New Project",
+                            icon: "plus.circle.fill",
+                            color: Color.primaryBrown
+                        )
+                    }
                 }
                 .padding(.horizontal)
 
@@ -49,15 +73,23 @@ struct HomeView: View {
                             Text("Recent Projects")
                                 .font(.headline)
                             Spacer()
-                            Button("See All") {}
-                                .font(.subheadline)
+                            Button("See All") {
+                                selectedTab = .projects
+                            }
+                            .font(.subheadline)
+                            .foregroundStyle(Color.primaryBrown)
                         }
                         .padding(.horizontal)
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 16) {
                                 ForEach(recentProjects) { project in
-                                    ProjectQuickCard(project: project)
+                                    NavigationLink {
+                                        ProjectDetailView(project: project, viewModel: viewModel)
+                                    } label: {
+                                        ProjectQuickCard(project: project)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
                             .padding(.horizontal)
@@ -72,14 +104,23 @@ struct HomeView: View {
                             Text("Recent Conversations")
                                 .font(.headline)
                             Spacer()
-                            Button("See All") {}
-                                .font(.subheadline)
+                            Button("See All") {
+                                showConversationHistory = true
+                            }
+                            .font(.subheadline)
+                            .foregroundStyle(Color.primaryBrown)
                         }
                         .padding(.horizontal)
 
                         VStack(spacing: 8) {
                             ForEach(recentConversations) { conversation in
-                                ConversationQuickCard(conversation: conversation)
+                                Button {
+                                    chatViewModel.loadConversation(conversation)
+                                    selectedTab = .chat
+                                } label: {
+                                    ConversationQuickCard(conversation: conversation)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.horizontal)
@@ -88,7 +129,17 @@ struct HomeView: View {
             }
             .padding(.bottom)
         }
-        .navigationTitle("Home")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
+        .sheet(isPresented: $showNewProjectSheet) {
+            CreateProjectSheet(viewModel: viewModel)
+        }
+        .sheet(isPresented: $showConversationHistory) {
+            ConversationHistoryView(viewModel: chatViewModel, isPresented: $showConversationHistory)
+        }
+        .task {
+            await viewModel.fetchProjects()
+        }
     }
 }
 
@@ -135,12 +186,12 @@ struct ProjectQuickCard: View {
                     .font(.caption)
             }
 
-            Text(project.name)
+            Text(project.name.cleanedMarkdown)
                 .font(.headline)
                 .foregroundStyle(Color.appText)
                 .lineLimit(1)
 
-            Text(project.description)
+            Text(project.description.cleanedMarkdown)
                 .font(.caption)
                 .foregroundStyle(Color.appMuted)
                 .lineLimit(2)
@@ -202,6 +253,18 @@ struct StatusBadge: View {
 struct ConversationQuickCard: View {
     let conversation: Conversation
 
+    private var previewText: String {
+        // Show first user message and response if available
+        if conversation.messages.count >= 2,
+           let userMessage = conversation.messages.first(where: { $0.type == .user }),
+           let assistantMessage = conversation.messages.first(where: { $0.type == .assistant }) {
+            return "\(userMessage.content.prefix(30))... → \(assistantMessage.content.prefix(30))..."
+        } else if let firstMessage = conversation.messages.first {
+            return String(firstMessage.content.prefix(60))
+        }
+        return "No messages yet"
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "message.fill")
@@ -215,12 +278,10 @@ struct ConversationQuickCard: View {
                     .foregroundStyle(Color.appText)
                     .lineLimit(1)
 
-                if let lastMessage = conversation.messages.last {
-                    Text(lastMessage.content)
-                        .font(.caption)
-                        .foregroundStyle(Color.appMuted)
-                        .lineLimit(1)
-                }
+                Text(previewText)
+                    .font(.caption)
+                    .foregroundStyle(Color.appMuted)
+                    .lineLimit(2)
             }
 
             Spacer()
@@ -242,6 +303,6 @@ struct ConversationQuickCard: View {
 
 #Preview {
     NavigationStack {
-        HomeView()
+        HomeView(selectedTab: .constant(.home), chatViewModel: ChatViewModel())
     }
 }

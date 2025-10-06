@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ChatView: View {
-    @State private var viewModel = ChatViewModel()
+    var viewModel: ChatViewModel
     @State private var messageText = ""
     @State private var scrollProxy: ScrollViewProxy?
     @State private var showImagePicker = false
@@ -16,6 +16,10 @@ struct ChatView: View {
     @State private var attachedImages: [UIImage] = []
     @State private var showConversationHistory = false
     @FocusState private var isInputFocused: Bool
+
+    init(viewModel: ChatViewModel? = nil) {
+        self.viewModel = viewModel ?? ChatViewModel()
+    }
 
     var body: some View {
         VStack(spacing: 0) {

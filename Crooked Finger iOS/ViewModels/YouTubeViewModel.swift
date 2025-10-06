@@ -106,16 +106,36 @@ class YouTubeViewModel {
     func savePatternToLibrary(patternViewModel: PatternViewModel) async -> Bool {
         guard let pattern = extractedPattern else { return false }
 
+        // Download and convert thumbnail to base64 if available
+        var thumbnailBase64: String?
+        if let thumbnailUrl = transcriptResult?.thumbnailUrl,
+           let url = URL(string: thumbnailUrl) {
+            thumbnailBase64 = await downloadImageAsBase64(url: url)
+        }
+
         let success = await patternViewModel.savePattern(
             name: pattern.patternName ?? "YouTube Pattern",
             notation: pattern.patternNotation ?? "",
             instructions: pattern.patternInstructions,
             difficulty: mapDifficulty(pattern.difficultyLevel),
             materials: pattern.materials,
-            estimatedTime: pattern.estimatedTime
+            estimatedTime: pattern.estimatedTime,
+            imageData: thumbnailBase64
         )
 
         return success
+    }
+
+    // MARK: - Image Download
+
+    private func downloadImageAsBase64(url: URL) async -> String? {
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            return data.base64EncodedString()
+        } catch {
+            print("❌ Error downloading thumbnail: \(error)")
+            return nil
+        }
     }
 
     // MARK: - Helper Methods
