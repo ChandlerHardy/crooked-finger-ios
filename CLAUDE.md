@@ -10,7 +10,7 @@ Native iOS port of the Crooked Finger web application - a crochet pattern assist
 - **Language**: Swift 6
 - **Architecture**: MVVM + SwiftUI
 - **Backend**: Shared GraphQL API (FastAPI + Strawberry)
-- **AI**: Google Gemini (multi-model system via backend)
+- **AI**: Multi-provider system (Google Gemini + OpenRouter) via backend
 - **Networking**: Apollo GraphQL Client (Swift)
 - **Local Storage**: SwiftData / Core Data
 - **Image Handling**: Kingfisher for caching
@@ -24,7 +24,9 @@ Native iOS port of the Crooked Finger web application - a crochet pattern assist
 
 ### Key Backend Features:
 1. **Pattern Translation** - Convert crochet notation to instructions
-2. **AI Chat** - Multi-model Gemini assistant (Pro, Flash Preview, Flash, Flash-Lite)
+2. **AI Chat** - Multi-provider AI assistant with automatic fallback:
+   - **Primary (Testing)**: OpenRouter Qwen3-30B-A3B (free, unlimited)
+   - **Fallback**: Google Gemini (Pro, Flash Preview, Flash, Flash-Lite with daily quotas)
 3. **Diagram Generation** - matplotlib-based crochet charts (PNG/SVG)
 4. **YouTube Transcripts** - Extract patterns from video tutorials via RapidAPI (100 requests/month free)
 5. **Pattern Library** - Save, browse, manage patterns
@@ -64,13 +66,37 @@ Native iOS port of the Crooked Finger web application - a crochet pattern assist
 
 ### Key Files
 - `backend/Dockerfile` - Python 3.11 with FastAPI + Strawberry GraphQL
-- `backend/requirements.txt` - Python dependencies
-- `backend/.env` - Environment variables (GEMINI_API_KEY, CORS_ORIGINS)
+- `backend/requirements.txt` - Python dependencies (includes httpx for OpenRouter)
+- `backend/.env` - Environment variables (API keys, CORS_ORIGINS) - **NOT committed to git**
+- `docker-compose.backend.yml` - Uses `env_file: ./backend/.env` for secure key loading
 
-### Critical Notes
-- ⚠️ **GEMINI_API_KEY** must be explicitly added to docker-compose.backend.yml environment section
-- ⚠️ **RAPIDAPI_KEY** configured for YouTube Transcript3 service (100 requests/month free tier)
+### AI Provider Configuration
+**Current Setup (Oct 7, 2025):**
+- `use_openrouter_default = True` in `ai_service.py` - routes all requests to OpenRouter Qwen3
+- Three API keys configured in `backend/.env`:
+  - `GEMINI_API_KEY` - Google Gemini (fallback, daily quotas)
+  - `OPENROUTER_API_KEY` - OpenRouter (primary, unlimited free tier)
+  - `RAPIDAPI_KEY` - YouTube Transcript3 service (100 requests/month)
+
+**Environment Variable Management:**
+- ✅ `docker-compose.backend.yml` uses `env_file: ./backend/.env` directive
+- ✅ All API keys loaded from `backend/.env` (secure, not in git)
+- ✅ Production deployment copies `backend/.env` to server via deploy script
+- ✅ Override production values with `environment:` section (DATABASE_URL, ENVIRONMENT, DEBUG)
 - ⚠️ Backend uses `case_sensitive = False` in config.py for env var loading
+
+**Adding New AI Providers:**
+1. Add API key to `backend/app/core/config.py` (e.g., `anthropic_api_key: Optional[str] = None`)
+2. Add key to `backend/.env` locally and on production server
+3. Implement `_translate_with_<provider>()` and `_chat_with_<provider>()` methods in `ai_service.py`
+4. Add provider to fallback logic or set as default via flag (e.g., `use_anthropic_default = True`)
+5. Redeploy backend with `./deploy-backend-to-oci.sh 150.136.38.166`
+
+**Provider Priority System:**
+- Set `use_<provider>_default = True` to make it primary
+- When primary fails/unavailable, fallback chain activates:
+  - OpenRouter Qwen3 → Gemini Pro → Gemini Flash Preview → Gemini Flash → Gemini Flash-Lite
+- Easy to test new providers without removing existing ones
 
 ## Project Structure
 ```
