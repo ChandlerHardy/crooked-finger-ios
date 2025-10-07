@@ -23,6 +23,7 @@ struct ProjectDetailView: View {
     @State private var editedNotes: String
     @State private var projectChatViewModel: ChatViewModel?
     @State private var showDeleteAlert = false
+    @State private var showNotation = true // Toggle between notation and instructions
     @Environment(\.dismiss) var dismiss
     @FocusState private var isPatternFocused: Bool
     @FocusState private var isNotesFocused: Bool
@@ -38,17 +39,17 @@ struct ProjectDetailView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Hero Image
-            if !projectImages.isEmpty {
-                GeometryReader { geometry in
+        ScrollView {
+            VStack(spacing: 0) {
+                // Hero Image
+                if !projectImages.isEmpty {
                     TabView(selection: $selectedImageIndex) {
                         ForEach(Array(projectImages.enumerated()), id: \.offset) { index, base64String in
                             if let image = ImageService.shared.base64ToImage(base64String: base64String) {
                                 Image(uiImage: image)
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
-                                    .frame(width: geometry.size.width)
+                                    .frame(height: 250)
                                     .tag(index)
                                     .onTapGesture {
                                         showImageViewer = true
@@ -58,44 +59,68 @@ struct ProjectDetailView: View {
                     }
                     .tabViewStyle(.page)
                     .indexViewStyle(.page(backgroundDisplayMode: .always))
+                    .frame(height: 250)
                 }
-                .frame(height: 250)
-            }
 
-            // Header
-            headerSection
-                .padding()
-                .padding(.top, projectImages.isEmpty ? 0 : 8)
+                // Header
+                headerSection
+                    .padding()
+                    .padding(.top, projectImages.isEmpty ? 0 : 8)
 
-            // Status Section
-            statusSection
+                // Compact Status Badge
+                HStack {
+                    StatusBadge(status: status)
+
+                    Spacer()
+
+                    Menu {
+                        ForEach(ProjectStatus.allCases, id: \.self) { projectStatus in
+                            Button {
+                                status = projectStatus
+                                updateStatus(projectStatus)
+                            } label: {
+                                Label(projectStatus.rawValue.capitalized, systemImage: projectStatus == status ? "checkmark" : "")
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text("Change Status")
+                            Image(systemName: "chevron.down")
+                        }
+                        .font(.subheadline)
+                        .foregroundStyle(Color.primaryBrown)
+                    }
+                }
                 .padding(.horizontal)
+                .padding(.bottom)
 
-            // Tab Picker
-            Picker("View", selection: $selectedTab) {
-                Text("Pattern").tag(0)
-                Text("Images").tag(1)
-                Text("Chat").tag(2)
-                Text("Notes").tag(3)
+                // Tab Picker
+                Picker("View", selection: $selectedTab) {
+                    Text("Pattern").tag(0)
+                    Text("Images").tag(1)
+                    Text("Chat").tag(2)
+                    Text("Notes").tag(3)
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+                .padding(.bottom, 8)
+
+                // Tab Content (non-scrollable sections)
+                Group {
+                    switch selectedTab {
+                    case 0:
+                        patternTabContent
+                    case 1:
+                        imageTabContent
+                    case 2:
+                        chatTabContent
+                    case 3:
+                        notesTabContent
+                    default:
+                        patternTabContent
+                    }
+                }
             }
-            .pickerStyle(.segmented)
-            .padding()
-
-            // Tab Content
-            TabView(selection: $selectedTab) {
-                patternTabContent
-                    .tag(0)
-
-                imageTabContent
-                    .tag(1)
-
-                chatTabContent
-                    .tag(2)
-
-                notesTabContent
-                    .tag(3)
-            }
-            .tabViewStyle(.page(indexDisplayMode: .never))
         }
         .background(Color.appBackground)
         .navigationTitle("Project Details")
@@ -168,27 +193,13 @@ struct ProjectDetailView: View {
         }
     }
 
-    private var statusSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Status")
-                .font(.headline)
-
-            Picker("Status", selection: $status) {
-                ForEach(ProjectStatus.allCases, id: \.self) { status in
-                    Text(status.rawValue.capitalized).tag(status)
-                }
-            }
-            .pickerStyle(.segmented)
-            .onChange(of: status) { oldValue, newValue in
-                // Update backend when status changes
-                Task {
-                    if let backendId = project.backendId {
-                        _ = await viewModel.updateProject(
-                            projectId: backendId,
-                            isCompleted: newValue == .completed
-                        )
-                    }
-                }
+    private func updateStatus(_ newStatus: ProjectStatus) {
+        Task {
+            if let backendId = project.backendId {
+                _ = await viewModel.updateProject(
+                    projectId: backendId,
+                    isCompleted: newStatus == .completed
+                )
             }
         }
     }
@@ -196,82 +207,94 @@ struct ProjectDetailView: View {
     // MARK: - Tab Content
 
     private var patternTabContent: some View {
-        ZStack {
-            // Tap area to dismiss keyboard
-            Color.clear
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    isPatternFocused = false
-                }
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Pattern")
+                    .font(.headline)
 
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text("Pattern Instructions")
-                        .font(.headline)
-
-                    Spacer()
-
-                    if isEditingPattern {
-                        Button("Cancel") {
-                            editedPattern = project.pattern
-                            isEditingPattern = false
-                        }
-                        .font(.subheadline)
-                        .foregroundStyle(Color.appMuted)
-                    }
-
-                    Button(isEditingPattern ? "Save" : "Edit") {
-                        if isEditingPattern {
-                            savePattern()
-                        }
-                        isEditingPattern.toggle()
-                    }
-                    .font(.subheadline)
-                    .foregroundStyle(Color.primaryBrown)
-                }
-                .padding(.horizontal)
-                .padding(.top)
+                Spacer()
 
                 if isEditingPattern {
-                    TextEditor(text: $editedPattern)
-                        .font(.system(.body, design: .monospaced))
-                        .padding(8)
+                    Button("Cancel") {
+                        editedPattern = project.pattern
+                        isEditingPattern = false
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(Color.appMuted)
+                }
+
+                Button(isEditingPattern ? "Save" : "Edit") {
+                    if isEditingPattern {
+                        savePattern()
+                    }
+                    isEditingPattern.toggle()
+                }
+                .font(.subheadline)
+                .foregroundStyle(Color.primaryBrown)
+            }
+            .padding(.horizontal)
+
+            // Toggle between Notation and Instructions
+            if !isEditingPattern && project.translatedInstructions != nil {
+                Picker("View Mode", selection: $showNotation) {
+                    Text("Notation").tag(true)
+                    Text("Instructions").tag(false)
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+            }
+
+            if isEditingPattern {
+                TextEditor(text: $editedPattern)
+                    .font(.system(.body, design: .monospaced))
+                    .frame(minHeight: 300)
+                    .padding(8)
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .padding(.horizontal)
+                    .focused($isPatternFocused)
+            } else {
+                let displayText = showNotation ? project.pattern : (project.translatedInstructions ?? project.pattern)
+
+                if displayText.isEmpty {
+                    Text("No pattern yet. Tap 'Edit' to add one.")
+                        .font(.body)
+                        .foregroundStyle(Color.appMuted)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
                         .background(Color(.systemGray6))
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .padding(.horizontal)
-                        .focused($isPatternFocused)
                 } else {
-                    ScrollView {
-                        if project.pattern.isEmpty {
-                            Text("No pattern instructions yet. Tap 'Edit' to add them.")
-                                .font(.body)
-                                .foregroundStyle(Color.appMuted)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding()
-                                .background(Color(.systemGray6))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                        } else {
-                            Text(project.pattern.cleanedMarkdown)
-                                .font(.body)
-                                .textSelection(.enabled)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding()
-                                .background(Color(.systemGray6))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                    VStack(alignment: .leading, spacing: 8) {
+                        if !showNotation {
+                            HStack {
+                                Image(systemName: "text.alignleft")
+                                    .font(.caption)
+                                Text("Plain English Instructions")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                            }
+                            .foregroundStyle(Color.primaryBrown)
+                            .padding(.horizontal)
                         }
+
+                        Text(displayText.cleanedMarkdown)
+                            .font(showNotation ? .system(.body, design: .monospaced) : .body)
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding()
+                            .background(Color(.systemGray6))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .padding(.horizontal)
                     }
-                    .padding(.horizontal)
                 }
             }
-            .allowsHitTesting(true)
         }
     }
 
     private var imageTabContent: some View {
-        ScrollView {
-            imageGallerySection
-                .padding()
-        }
+        imageGallerySection
     }
 
     private var chatTabContent: some View {
@@ -301,39 +324,29 @@ struct ProjectDetailView: View {
     }
 
     private var notesTabContent: some View {
-        ZStack {
-            // Tap area to dismiss keyboard
-            Color.clear
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    isNotesFocused = false
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Project Notes")
+                    .font(.headline)
+
+                Spacer()
+
+                Button("Save") {
+                    saveNotes()
                 }
-
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text("Project Notes")
-                        .font(.headline)
-
-                    Spacer()
-
-                    Button("Save") {
-                        saveNotes()
-                    }
-                    .font(.subheadline)
-                    .foregroundStyle(Color.primaryBrown)
-                }
-                .padding(.horizontal)
-                .padding(.top)
-
-                TextEditor(text: $editedNotes)
-                    .font(.body)
-                    .padding(8)
-                    .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .padding(.horizontal)
-                    .focused($isNotesFocused)
+                .font(.subheadline)
+                .foregroundStyle(Color.primaryBrown)
             }
-            .allowsHitTesting(true)
+            .padding(.horizontal)
+
+            TextEditor(text: $editedNotes)
+                .font(.body)
+                .frame(minHeight: 300)
+                .padding(8)
+                .background(Color(.systemGray6))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .padding(.horizontal)
+                .focused($isNotesFocused)
         }
     }
 
@@ -353,6 +366,7 @@ struct ProjectDetailView: View {
                         .foregroundColor(.primaryBrown)
                 }
             }
+            .padding(.horizontal)
 
             if !projectImages.isEmpty {
                 Base64ImageGallery(

@@ -18,7 +18,8 @@ struct Project: Identifiable, Codable {
     let id: UUID
     var name: String
     var description: String
-    var pattern: String
+    var pattern: String // Pattern notation (technical)
+    var translatedInstructions: String? // Plain English instructions
     var status: ProjectStatus
     var difficulty: PatternDifficulty
     var tags: [String]
@@ -35,6 +36,7 @@ struct Project: Identifiable, Codable {
         name: String,
         description: String,
         pattern: String,
+        translatedInstructions: String? = nil,
         status: ProjectStatus = .planning,
         difficulty: PatternDifficulty = .beginner,
         tags: [String] = [],
@@ -50,6 +52,7 @@ struct Project: Identifiable, Codable {
         self.name = name
         self.description = description
         self.pattern = pattern
+        self.translatedInstructions = translatedInstructions
         self.status = status
         self.difficulty = difficulty
         self.tags = tags
