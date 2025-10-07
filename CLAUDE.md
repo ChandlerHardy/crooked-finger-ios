@@ -221,12 +221,19 @@ Crooked Finger iOSUITests/
    - ✅ Editable notes in ProjectDetailView (Notes tab with auto-save)
    - ✅ Editable pattern notation/instructions in PatternDetailView
    - ✅ Tap-to-dismiss keyboard (ZStack overlay pattern, like ChatView)
-12. ✅ **YouTube Transcript Feature via RapidAPI** (Oct 6, 2025) - READY
+12. ✅ **YouTube Transcript Feature via RapidAPI** (Oct 6, 2025)
    - Backend migrated from youtube-transcript-api to RapidAPI YouTube Transcript3 service
    - Works from production backend (no IP blocking issues)
    - Free tier: 100 requests/month
-   - iOS UI ready to re-enable (PatternLibraryView needs YouTube import option restored)
+   - iOS YouTubeTranscriptView with full UI (fetch, extract, preview, save)
    - GraphQL mutation `fetchYoutubeTranscript` fully functional
+   - Thumbnail download and base64 conversion for pattern images
+   - Automatic INSTRUCTIONS section parsing (splits notation from plain-text instructions)
+   - **Backend Schema Update** (Oct 6, 2025 - PENDING DEPLOYMENT):
+     - Added `translated_text` field to `CreateProjectInput` (types.py)
+     - Updated `create_project` mutation to accept instructions on create (mutations.py)
+     - Eliminates need for separate update request when saving patterns with instructions
+     - More performant: 1 request instead of 2
 13. ⏳ AI Usage dashboard integration (pending)
 14. ⏳ Local data persistence with SwiftData (pending)
 

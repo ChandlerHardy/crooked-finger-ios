@@ -294,6 +294,8 @@ struct YouTubeTranscriptView: View {
             let success = await viewModel.savePatternToLibrary(patternViewModel: patternViewModel)
             if success {
                 print("✅ Pattern saved to library")
+                // Refresh patterns list to ensure images are loaded
+                await patternViewModel.fetchPatterns()
                 dismiss()
             }
         }

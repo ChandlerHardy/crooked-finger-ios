@@ -49,7 +49,7 @@ class PatternViewModel {
                 return Pattern(
                     id: UUID().uuidString,
                     name: projectResponse.name,
-                    description: projectResponse.translatedText,
+                    description: nil, // Patterns don't have descriptions
                     difficulty: mapDifficulty(projectResponse.difficultyLevel),
                     category: nil,
                     tags: [], // Backend doesn't have tags yet
@@ -105,6 +105,7 @@ class PatternViewModel {
             let input: [String: Any?] = [
                 "name": name,
                 "patternText": notation,
+                "translatedText": instructions,
                 "difficultyLevel": difficulty?.rawValue,
                 "estimatedTime": estimatedTime,
                 "yarnWeight": materials,
@@ -112,6 +113,11 @@ class PatternViewModel {
                 "notes": nil,
                 "imageData": imageDataJSON
             ]
+
+            print("💾 Saving pattern with:")
+            print("  - notation: \(notation.prefix(100))")
+            print("  - instructions: \(instructions?.prefix(100) ?? "nil")")
+            print("  - imageData: \(imageDataJSON != nil ? "present" : "nil")")
 
             let variables: [String: Any] = [
                 "input": input
@@ -122,6 +128,11 @@ class PatternViewModel {
                 variables: variables
             )
 
+            print("📋 Backend response:")
+            print("  - patternText: \(response.createProject.patternText?.prefix(100) ?? "nil")")
+            print("  - translatedText: \(response.createProject.translatedText?.prefix(100) ?? "nil")")
+            print("  - imageData: \(response.createProject.imageData != nil ? "present" : "nil")")
+
             // Parse imageData JSON into images array
             var images: [String] = []
             if let imageDataJSON = response.createProject.imageData,
@@ -129,16 +140,18 @@ class PatternViewModel {
                let imageArray = try? JSONDecoder().decode([String].self, from: jsonData) {
                 images = imageArray
                 print("✅ Saved pattern with \(images.count) image(s)")
+            } else {
+                print("⚠️ No images in response")
             }
 
             // Add new pattern to local list
             let newPattern = Pattern(
                 id: UUID().uuidString,
                 name: response.createProject.name,
-                description: response.createProject.translatedText,
+                description: nil, // Patterns don't have descriptions (that's for display in UI)
                 difficulty: mapDifficulty(response.createProject.difficultyLevel),
                 notation: response.createProject.patternText ?? "",
-                instructions: response.createProject.translatedText,
+                instructions: response.createProject.translatedText, // Instructions from backend
                 materials: response.createProject.yarnWeight,
                 estimatedTime: response.createProject.estimatedTime,
                 images: images,

@@ -110,13 +110,27 @@ class YouTubeViewModel {
         var thumbnailBase64: String?
         if let thumbnailUrl = transcriptResult?.thumbnailUrl,
            let url = URL(string: thumbnailUrl) {
+            print("📥 Downloading thumbnail from: \(thumbnailUrl)")
             thumbnailBase64 = await downloadImageAsBase64(url: url)
+            if let thumbData = thumbnailBase64 {
+                print("✅ Thumbnail downloaded successfully (\(thumbData.count) chars)")
+            } else {
+                print("❌ Failed to download thumbnail")
+            }
+        } else {
+            print("⚠️ No thumbnail URL available. transcriptResult: \(transcriptResult != nil), thumbnailUrl: \(transcriptResult?.thumbnailUrl ?? "nil")")
         }
+
+        // Parse notation and instructions
+        let (cleanedNotation, extractedInstructions) = parseNotationAndInstructions(
+            notation: pattern.patternNotation,
+            existingInstructions: pattern.patternInstructions
+        )
 
         let success = await patternViewModel.savePattern(
             name: pattern.patternName ?? "YouTube Pattern",
-            notation: pattern.patternNotation ?? "",
-            instructions: pattern.patternInstructions,
+            notation: cleanedNotation,
+            instructions: extractedInstructions,
             difficulty: mapDifficulty(pattern.difficultyLevel),
             materials: pattern.materials,
             estimatedTime: pattern.estimatedTime,
@@ -124,6 +138,50 @@ class YouTubeViewModel {
         )
 
         return success
+    }
+
+    /// Parse pattern notation and extract instructions section if present
+    /// - Parameters:
+    ///   - notation: The pattern notation text
+    ///   - existingInstructions: Existing instructions from the pattern
+    /// - Returns: Tuple of (cleaned notation, combined instructions)
+    private func parseNotationAndInstructions(notation: String?, existingInstructions: String?) -> (String, String?) {
+        guard let notation = notation else {
+            return ("", existingInstructions)
+        }
+
+        // Try to find "INSTRUCTIONS" with or without colon, optionally with newline after
+        let patterns = [
+            "INSTRUCTIONS:",
+            "INSTRUCTIONS",
+            "Instructions:",
+            "Instructions"
+        ]
+
+        for pattern in patterns {
+            if let instructionsRange = notation.range(of: pattern, options: .caseInsensitive) {
+                // Split at "INSTRUCTIONS"
+                let beforeInstructions = notation[..<instructionsRange.lowerBound].trimmingCharacters(in: .whitespacesAndNewlines)
+                var instructionsText = notation[instructionsRange.upperBound...].trimmingCharacters(in: .whitespacesAndNewlines)
+
+                // Remove leading colon if present
+                if instructionsText.hasPrefix(":") {
+                    instructionsText = String(instructionsText.dropFirst()).trimmingCharacters(in: .whitespacesAndNewlines)
+                }
+
+                // Combine with existing instructions if any
+                var combinedInstructions = instructionsText
+                if let existing = existingInstructions, !existing.isEmpty {
+                    combinedInstructions = existing + "\n\n" + instructionsText
+                }
+
+                print("✂️ Extracted instructions from notation using pattern '\(pattern)' (\(instructionsText.count) chars)")
+                return (beforeInstructions, combinedInstructions)
+            }
+        }
+
+        // No "INSTRUCTIONS" section found, return as-is
+        return (notation, existingInstructions)
     }
 
     // MARK: - Image Download
