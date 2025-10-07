@@ -28,6 +28,8 @@ enum TabItem: String, CaseIterable {
 struct TabNavigationView: View {
     @State private var selectedTab: TabItem = .home
     @State private var chatViewModel = ChatViewModel()
+    @State private var patternViewModel = PatternViewModel()
+    @State private var projectViewModel = ProjectViewModel()
     @State private var hasVisitedChat = false
     @State private var hasVisitedPatterns = false
     @State private var hasVisitedProjects = false
@@ -60,7 +62,7 @@ struct TabNavigationView: View {
 
             NavigationStack {
                 if hasVisitedPatterns || selectedTab == .patterns {
-                    PatternLibraryView()
+                    PatternLibraryView(viewModel: patternViewModel)
                         .background(Color.appBackground)
                         .onAppear { hasVisitedPatterns = true }
                 } else {
@@ -74,7 +76,7 @@ struct TabNavigationView: View {
 
             NavigationStack {
                 if hasVisitedProjects || selectedTab == .projects {
-                    ProjectsView()
+                    ProjectsView(viewModel: projectViewModel)
                         .background(Color.appBackground)
                         .onAppear { hasVisitedProjects = true }
                 } else {

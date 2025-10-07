@@ -12,6 +12,7 @@ struct Conversation: Identifiable, Codable {
     var backendId: Int? // Backend conversation ID
     var title: String
     var messages: [ChatMessage]
+    var messageCount: Int // Total message count from backend
     var createdAt: Date
     var updatedAt: Date
 
@@ -20,6 +21,7 @@ struct Conversation: Identifiable, Codable {
         backendId: Int? = nil,
         title: String,
         messages: [ChatMessage] = [],
+        messageCount: Int = 0,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
@@ -27,6 +29,7 @@ struct Conversation: Identifiable, Codable {
         self.backendId = backendId
         self.title = title
         self.messages = messages
+        self.messageCount = messageCount
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }

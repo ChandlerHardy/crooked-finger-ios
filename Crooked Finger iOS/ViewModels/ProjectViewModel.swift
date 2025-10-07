@@ -18,6 +18,12 @@ class ProjectViewModel {
     private let client = GraphQLClient.shared
     private let imageService = ImageService.shared
 
+    init() {
+        Task {
+            await fetchProjects()
+        }
+    }
+
     // MARK: - Fetch Projects
 
     func fetchProjects() async {

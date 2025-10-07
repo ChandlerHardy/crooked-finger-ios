@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(AuthViewModel.self) private var authViewModel
+    @AppStorage("appearanceMode") private var appearanceMode: AppearanceMode = .system
     @State private var notificationsEnabled = true
     @State private var hapticFeedback = true
 
@@ -45,6 +46,13 @@ struct SettingsView: View {
             }
 
             Section("App Settings") {
+                Picker("Appearance", selection: $appearanceMode) {
+                    ForEach(AppearanceMode.allCases) { mode in
+                        Text(mode.displayName).tag(mode)
+                    }
+                }
+                .tint(Color.primaryBrown)
+
                 Toggle("Notifications", isOn: $notificationsEnabled)
                     .tint(Color.primaryBrown)
                 Toggle("Haptic Feedback", isOn: $hapticFeedback)

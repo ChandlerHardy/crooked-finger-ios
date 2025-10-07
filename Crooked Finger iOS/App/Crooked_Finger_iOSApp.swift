@@ -10,6 +10,7 @@ import SwiftUI
 @main
 struct Crooked_Finger_iOSApp: App {
     let authViewModel = AuthViewModel()
+    @AppStorage("appearanceMode") private var appearanceMode: AppearanceMode = .system
 
     var body: some Scene {
         WindowGroup {
@@ -21,7 +22,7 @@ struct Crooked_Finger_iOSApp: App {
                 }
             }
             .environment(authViewModel)
-            .preferredColorScheme(nil) // Respect system setting
+            .preferredColorScheme(appearanceMode.colorScheme)
         }
     }
 }

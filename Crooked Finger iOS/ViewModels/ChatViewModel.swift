@@ -35,6 +35,54 @@ class ChatViewModel {
             createNewConversation()
         } else {
             currentConversation = conversations.first
+            if let conversationId = currentConversation?.backendId {
+                await loadMessages(for: conversationId)
+            } else {
+                messages = currentConversation?.messages ?? []
+            }
+        }
+    }
+
+    // Load messages for a specific conversation from backend
+    func loadMessages(for conversationId: Int) async {
+        do {
+            let variables: [String: Any] = [
+                "conversationId": conversationId,
+                "limit": 100
+            ]
+
+            let response: GetChatMessagesData = try await client.execute(
+                query: GraphQLOperations.getChatMessages,
+                variables: variables
+            )
+
+            // Convert backend messages to app model
+            var loadedMessages: [ChatMessage] = []
+            for msgResponse in response.chatMessages {
+                // User message
+                loadedMessages.append(ChatMessage(
+                    type: .user,
+                    content: msgResponse.message,
+                    timestamp: ISO8601DateFormatter().date(from: msgResponse.createdAt) ?? Date()
+                ))
+                // AI response
+                loadedMessages.append(ChatMessage(
+                    type: .assistant,
+                    content: msgResponse.response,
+                    timestamp: ISO8601DateFormatter().date(from: msgResponse.createdAt) ?? Date()
+                ))
+            }
+
+            messages = loadedMessages
+
+            // Update currentConversation with loaded messages
+            if let index = conversations.firstIndex(where: { $0.backendId == conversationId }) {
+                conversations[index].messages = loadedMessages
+            }
+
+        } catch {
+            print("❌ Error loading messages from backend: \(error)")
+            // Fallback to conversation's cached messages
             messages = currentConversation?.messages ?? []
         }
     }
@@ -256,14 +304,44 @@ class ChatViewModel {
     }
 
     private func loadConversations() async {
-        // Perform UserDefaults I/O off main thread
-        let data = await Task.detached {
-            UserDefaults.standard.data(forKey: "conversations")
-        }.value
+        // Fetch conversations from backend
+        do {
+            let variables: [String: Any] = [
+                "limit": 50
+            ]
 
-        if let data = data,
-           let decoded = try? JSONDecoder().decode([Conversation].self, from: data) {
-            conversations = decoded
+            let response: GetConversationsData = try await client.execute(
+                query: GraphQLOperations.getConversations,
+                variables: variables
+            )
+
+            // Convert backend conversations to app model
+            conversations = response.conversations.map { conv in
+                Conversation(
+                    id: UUID().uuidString,
+                    backendId: conv.id,
+                    title: conv.title,
+                    messages: [], // Load messages separately when conversation is selected
+                    messageCount: conv.messageCount,
+                    createdAt: ISO8601DateFormatter().date(from: conv.createdAt) ?? Date(),
+                    updatedAt: ISO8601DateFormatter().date(from: conv.updatedAt) ?? Date()
+                )
+            }
+
+            // Also save to UserDefaults as offline cache
+            saveConversations()
+
+        } catch {
+            print("❌ Error loading conversations from backend: \(error)")
+            // Fallback to UserDefaults if backend fails
+            let data = await Task.detached {
+                UserDefaults.standard.data(forKey: "conversations")
+            }.value
+
+            if let data = data,
+               let decoded = try? JSONDecoder().decode([Conversation].self, from: data) {
+                conversations = decoded
+            }
         }
     }
 

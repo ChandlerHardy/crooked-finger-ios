@@ -46,32 +46,57 @@ struct PatternDetailView: View {
                 }
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    // Header
-                    HStack {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(pattern.name.cleanedMarkdown)
-                                .font(.title)
-                                .fontWeight(.bold)
-                                .foregroundStyle(Color.appText)
+                VStack(alignment: .leading, spacing: 0) {
+                    // Hero Image
+                    if !patternImages.isEmpty {
+                        GeometryReader { geometry in
+                            TabView(selection: $selectedImageIndex) {
+                                ForEach(Array(patternImages.enumerated()), id: \.offset) { index, base64String in
+                                    if let image = ImageService.shared.base64ToImage(base64String: base64String) {
+                                        Image(uiImage: image)
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                            .frame(width: geometry.size.width)
+                                            .tag(index)
+                                            .onTapGesture {
+                                                showImageViewer = true
+                                            }
+                                    }
+                                }
+                            }
+                            .tabViewStyle(.page)
+                            .indexViewStyle(.page(backgroundDisplayMode: .always))
+                        }
+                        .frame(height: 250)
+                    }
 
-                            if let description = pattern.description {
-                                Text(description.cleanedMarkdown)
-                                    .font(.subheadline)
-                                    .foregroundStyle(Color.appMuted)
+                    VStack(alignment: .leading, spacing: 20) {
+                        // Header
+                        HStack {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(pattern.name.cleanedMarkdown)
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(Color.appText)
+
+                                if let description = pattern.description {
+                                    Text(description.cleanedMarkdown)
+                                        .font(.subheadline)
+                                        .foregroundStyle(Color.appMuted)
+                                }
+                            }
+
+                            Spacer()
+
+                            Button {
+                                isFavorite.toggle()
+                            } label: {
+                                Image(systemName: isFavorite ? "star.fill" : "star")
+                                    .foregroundStyle(.yellow)
+                                    .font(.title2)
                             }
                         }
-
-                        Spacer()
-
-                        Button {
-                            isFavorite.toggle()
-                        } label: {
-                            Image(systemName: isFavorite ? "star.fill" : "star")
-                                .foregroundStyle(.yellow)
-                                .font(.title2)
-                        }
-                    }
+                        .padding(.top, patternImages.isEmpty ? 0 : 16)
 
                     // Metadata
                     VStack(alignment: .leading, spacing: 12) {
@@ -221,49 +246,10 @@ struct PatternDetailView: View {
                             }
                         }
                     }
-
-                    // Image Gallery
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Text("Diagrams & Photos")
-                                .font(.headline)
-
-                            Spacer()
-
-                            Button {
-                                showImagePicker = true
-                            } label: {
-                                Label("Add Photos", systemImage: "photo.badge.plus")
-                                    .font(.subheadline)
-                                    .foregroundColor(.primaryBrown)
-                            }
-                        }
-
-                        if !patternImages.isEmpty {
-                            Base64ImageGallery(
-                                images: patternImages,
-                                columns: 3,
-                                onImageTap: { index in
-                                    selectedImageIndex = index
-                                    showImageViewer = true
-                                },
-                                onDeleteImage: { index in
-                                    deleteImage(at: index)
-                                }
-                            )
-                        } else {
-                            Text("No photos yet")
-                                .font(.body)
-                                .foregroundStyle(.secondary)
-                                .padding()
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .background(Color(.systemGray6))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                        }
-                    }
                 }
                 .padding()
-                .allowsHitTesting(true)
+            }
+            .allowsHitTesting(true)
             }
         }
         .background(Color.appBackground)
@@ -272,6 +258,12 @@ struct PatternDetailView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
+                    Button {
+                        showImagePicker = true
+                    } label: {
+                        Label("Add Photos", systemImage: "photo.badge.plus")
+                    }
+
                     Button {
                         showCreateProjectSheet = true
                     } label: {

@@ -39,9 +39,33 @@ struct ProjectDetailView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // Hero Image
+            if !projectImages.isEmpty {
+                GeometryReader { geometry in
+                    TabView(selection: $selectedImageIndex) {
+                        ForEach(Array(projectImages.enumerated()), id: \.offset) { index, base64String in
+                            if let image = ImageService.shared.base64ToImage(base64String: base64String) {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: geometry.size.width)
+                                    .tag(index)
+                                    .onTapGesture {
+                                        showImageViewer = true
+                                    }
+                            }
+                        }
+                    }
+                    .tabViewStyle(.page)
+                    .indexViewStyle(.page(backgroundDisplayMode: .always))
+                }
+                .frame(height: 250)
+            }
+
             // Header
             headerSection
                 .padding()
+                .padding(.top, projectImages.isEmpty ? 0 : 8)
 
             // Status Section
             statusSection

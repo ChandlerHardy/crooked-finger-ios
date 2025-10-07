@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ProjectsView: View {
-    @State private var viewModel = ProjectViewModel()
+    @State var viewModel: ProjectViewModel
     @State private var searchText = ""
     @State private var showCreateSheet = false
 
@@ -83,12 +83,7 @@ struct ProjectsView: View {
         .sheet(isPresented: $showCreateSheet) {
             CreateProjectSheet(viewModel: viewModel)
         }
-        .task {
-            // Fetch projects on view appear
-            if viewModel.projects.isEmpty {
-                await viewModel.fetchProjects()
-            }
-        }
+
         .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
             Button("OK") {
                 viewModel.errorMessage = nil
@@ -249,6 +244,6 @@ struct CreateProjectSheet: View {
 
 #Preview {
     NavigationStack {
-        ProjectsView()
+        ProjectsView(viewModel: ProjectViewModel())
     }
 }

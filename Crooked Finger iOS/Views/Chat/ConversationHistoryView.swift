@@ -103,7 +103,7 @@ struct ConversationRow: View {
                 HStack(spacing: 6) {
                     Image(systemName: "message.fill")
                         .font(.caption2)
-                    Text("\(conversation.messages.count) messages")
+                    Text("\(conversation.messageCount) messages")
                         .font(.caption)
                     Text("•")
                         .font(.caption2)

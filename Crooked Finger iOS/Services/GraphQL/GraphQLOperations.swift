@@ -147,6 +147,21 @@ enum GraphQLOperations {
     }
     """
 
+    static let getChatMessages = """
+    query GetChatMessages($conversationId: Int, $limit: Int) {
+        chatMessages(conversationId: $conversationId, limit: $limit) {
+            id
+            message
+            response
+            messageType
+            conversationId
+            projectId
+            userId
+            createdAt
+        }
+    }
+    """
+
     static let fetchYoutubeTranscript = """
     mutation FetchYoutubeTranscript($videoUrl: String!, $languages: [String!]) {
         fetchYoutubeTranscript(videoUrl: $videoUrl, languages: $languages) {
@@ -456,4 +471,19 @@ struct ConversationResponse: Decodable {
     let createdAt: String
     let updatedAt: String
     let messageCount: Int
+}
+
+struct GetChatMessagesData: Decodable {
+    let chatMessages: [ChatMessageResponse]
+}
+
+struct ChatMessageResponse: Decodable {
+    let id: Int
+    let message: String
+    let response: String
+    let messageType: String
+    let conversationId: Int?
+    let projectId: Int?
+    let userId: Int
+    let createdAt: String
 }

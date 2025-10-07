@@ -18,6 +18,12 @@ class PatternViewModel {
     private let client = GraphQLClient.shared
     private let imageService = ImageService.shared
 
+    init() {
+        Task {
+            await fetchPatterns()
+        }
+    }
+
     // MARK: - Fetch Patterns
 
     func fetchPatterns() async {

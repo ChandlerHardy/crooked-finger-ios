@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct PatternLibraryView: View {
-    @State private var viewModel = PatternViewModel()
+    @State var viewModel: PatternViewModel
     @State private var searchText = ""
     @State private var showCreateSheet = false
     @State private var showYouTubeSheet = false
@@ -98,12 +98,7 @@ struct PatternLibraryView: View {
         .sheet(isPresented: $showYouTubeSheet) {
             YouTubeTranscriptView(patternViewModel: viewModel)
         }
-        .task {
-            // Fetch patterns on view appear
-            if viewModel.patterns.isEmpty {
-                await viewModel.fetchPatterns()
-            }
-        }
+
         .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
             Button("Copy Error") {
                 if let errorMessage = viewModel.errorMessage {
@@ -291,6 +286,6 @@ struct CreatePatternSheet: View {
 
 #Preview {
     NavigationStack {
-        PatternLibraryView()
+        PatternLibraryView(viewModel: PatternViewModel())
     }
 }
