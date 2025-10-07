@@ -9,7 +9,7 @@ import SwiftUI
 
 @main
 struct Crooked_Finger_iOSApp: App {
-    @State private var authViewModel = AuthViewModel()
+    let authViewModel = AuthViewModel()
 
     var body: some Scene {
         WindowGroup {
@@ -20,9 +20,8 @@ struct Crooked_Finger_iOSApp: App {
                     LoginView()
                 }
             }
-            .background(Color.appBackground)
-            .preferredColorScheme(nil) // Respect system setting
             .environment(authViewModel)
+            .preferredColorScheme(nil) // Respect system setting
         }
     }
 }

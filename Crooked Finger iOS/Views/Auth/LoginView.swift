@@ -20,9 +20,10 @@ struct LoginView: View {
             VStack(spacing: 24) {
                 // Logo/Header
                 VStack(spacing: 12) {
-                    Image(systemName: "hand.point.up.braille.fill")
-                        .font(.system(size: 60))
-                        .foregroundStyle(Color.primaryBrown)
+                    Image("Logo")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 120)
 
                     Text("Crooked Finger")
                         .font(.largeTitle)

@@ -29,17 +29,14 @@ struct HomeView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                // Welcome Header
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Welcome to")
-                        .font(.title3)
-                        .foregroundStyle(Color.appMuted)
-                    Text("Crooked Finger")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .foregroundStyle(Color.appText)
-                }
-                .padding(.horizontal)
+                // Logo
+                Image("Logo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 80)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 12)
+                    .padding(.horizontal)
 
                 // Quick Actions
                 HStack(spacing: 16) {
