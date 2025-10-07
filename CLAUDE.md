@@ -449,5 +449,45 @@ See Notion Projects database for detailed phase breakdowns:
 - Phase 6: ⏳ Backlog (Widgets, Watch, Siri)
 - Phase 7: ⏳ Backlog (App Store Launch)
 
+## 📝 Recent iOS Updates
+
+### October 7, 2025 - UI Polish & Chat Improvements
+1. **Backend-Synced Chat History** (`eb3a67a`)
+   - Conversations and messages now load from PostgreSQL database
+   - Added conversation_id filtering support
+   - Implemented eager data loading for patterns and projects on startup
+   - Chat messages display in chronological order
+
+2. **Project Detail View Improvements** (`8d6cbab`)
+   - Added notation/instructions toggle for pattern display
+   - Reduced spacing between tab picker and content
+   - Removed minHeight constraint causing large gaps
+   - Optimized image gallery padding and alignment
+   - Technical notation shown in monospace font
+   - Plain English instructions shown in regular font
+
+3. **App Branding** (`bdf8383`)
+   - Added custom logo and launch screen
+   - Professional app icon design
+   - Polished first-launch experience
+
+### October 6, 2025 - YouTube & Content Management
+1. **YouTube Transcript Integration** (`9faf812`)
+   - Re-enabled YouTube pattern extraction using RapidAPI
+   - Extract patterns directly from YouTube crochet tutorials
+   - 100 free requests/month quota
+
+2. **YouTube Pattern Enhancements** (`2fe4ce4`, `16f46d5`)
+   - Added YouTube thumbnail display on pattern cards
+   - Fixed pattern saving with both thumbnails and instructions
+   - Improved home page card UI with thumbnail support
+   - YouTube thumbnails now properly persist to backend
+
+3. **Delete & Markdown Improvements** (`0c26fea`)
+   - Added delete functionality for patterns and projects
+   - Implemented markdown cleaning for better text display
+   - Remove excessive newlines and formatting artifacts
+   - Cleaner pattern/project descriptions
+
 ---
-*Last Updated: October 7, 2025 - UI Polish & YouTube Pattern Parsing Improvements*
+*Last Updated: October 7, 2025*
