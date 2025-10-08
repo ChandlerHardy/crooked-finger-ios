@@ -13,6 +13,7 @@ struct PatternDetailView: View {
     @State private var isFavorite: Bool
     @State private var showCreateProjectSheet = false
     @State private var showImagePicker = false
+    @State private var showMediaPicker = false
     @State private var selectedImages: [UIImage] = []
     @State private var patternImages: [String] = []
     @State private var showImageViewer = false
@@ -22,6 +23,7 @@ struct PatternDetailView: View {
     @State private var editedNotation: String
     @State private var editedInstructions: String
     @State private var showDeleteAlert = false
+    @State private var viewKey = UUID()
     @Environment(\.dismiss) var dismiss
     @FocusState private var isNotationFocused: Bool
     @FocusState private var isInstructionsFocused: Bool
@@ -47,30 +49,29 @@ struct PatternDetailView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    // Hero Image
+                    // Hero Image - moved OUTSIDE the content VStack
                     if !patternImages.isEmpty {
-                        GeometryReader { geometry in
-                            TabView(selection: $selectedImageIndex) {
-                                ForEach(Array(patternImages.enumerated()), id: \.offset) { index, base64String in
-                                    if let image = ImageService.shared.base64ToImage(base64String: base64String) {
-                                        Image(uiImage: image)
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fit)
-                                            .frame(width: geometry.size.width)
-                                            .tag(index)
-                                            .onTapGesture {
-                                                showImageViewer = true
-                                            }
-                                    }
+                        TabView(selection: $selectedImageIndex) {
+                            ForEach(Array(patternImages.enumerated()), id: \.offset) { index, base64String in
+                                if let image = ImageService.shared.base64ToImage(base64String: base64String) {
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .tag(index)
+                                        .onTapGesture {
+                                            showImageViewer = true
+                                        }
                                 }
                             }
-                            .tabViewStyle(.page)
-                            .indexViewStyle(.page(backgroundDisplayMode: .always))
                         }
                         .frame(height: 250)
+                        .tabViewStyle(.page)
+                        .indexViewStyle(.page(backgroundDisplayMode: .always))
                     }
+                }
 
-                    VStack(alignment: .leading, spacing: 20) {
+                // Content in separate VStack
+                VStack(alignment: .leading, spacing: 20) {
                         // Header
                         HStack {
                             VStack(alignment: .leading, spacing: 8) {
@@ -96,7 +97,6 @@ struct PatternDetailView: View {
                                     .font(.title2)
                             }
                         }
-                        .padding(.top, patternImages.isEmpty ? 0 : 16)
 
                     // Metadata
                     VStack(alignment: .leading, spacing: 12) {
@@ -248,9 +248,9 @@ struct PatternDetailView: View {
                     }
                 }
                 .padding()
+                .padding(.top, patternImages.isEmpty ? 0 : 16)
             }
             .allowsHitTesting(true)
-            }
         }
         .background(Color.appBackground)
         .navigationTitle("Pattern Details")
@@ -259,7 +259,7 @@ struct PatternDetailView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Button {
-                        showImagePicker = true
+                        showMediaPicker = true
                     } label: {
                         Label("Add Photos", systemImage: "photo.badge.plus")
                     }
@@ -294,8 +294,8 @@ struct PatternDetailView: View {
         .sheet(isPresented: $showCreateProjectSheet) {
             CreateProjectFromPatternSheet(pattern: pattern, viewModel: viewModel)
         }
-        .sheet(isPresented: $showImagePicker) {
-            ImagePicker(selectedImages: $selectedImages, maxSelection: 10)
+        .sheet(isPresented: $showMediaPicker) {
+            MediaPickerView(selectedImages: $selectedImages)
         }
         .fullScreenCover(isPresented: $showImageViewer) {
             Base64ImageViewer(images: patternImages, currentIndex: $selectedImageIndex)
@@ -368,24 +368,37 @@ struct PatternDetailView: View {
         Task {
             guard let backendId = pattern.backendId else { return }
 
-            // Convert new images to base64
-            let newBase64Images = images.compactMap { ImageService.shared.imageToBase64(image: $0) }
+            print("🖼️ Uploading \(images.count) new images to pattern")
+            print("🖼️ Current pattern has \(patternImages.count) existing images")
 
-            // Append to existing images
-            var allImages = patternImages
-            allImages.append(contentsOf: newBase64Images)
+            // Convert existing base64 images back to UIImages
+            let existingUIImages = patternImages.compactMap { ImageService.shared.base64ToImage(base64String: $0) }
 
-            // Update backend - patterns use the same updateProject mutation
+            // Combine existing and new images
+            let allUIImages = existingUIImages + images
+
+            print("🖼️ Total images after combining: \(allUIImages.count)")
+
+            // Update backend with all images
             let success = await viewModel.updatePattern(
                 patternId: backendId,
-                images: images
+                images: allUIImages
             )
 
             if success {
                 await MainActor.run {
-                    patternImages = allImages
+                    // Convert all images to base64 for display
+                    let allBase64Images = allUIImages.compactMap { ImageService.shared.imageToBase64(image: $0) }
+
+                    // Force complete view recreation
+                    patternImages = allBase64Images
+                    viewKey = UUID()
                     selectedImages = []
+
+                    print("✅ Pattern updated with \(allBase64Images.count) total images")
                 }
+            } else {
+                print("❌ Failed to update pattern images")
             }
         }
     }

@@ -408,11 +408,17 @@ struct CreatePatternSheet: View {
                     currentDifficulty: $difficulty,
                     currentMaterials: $materials,
                     currentEstimatedTime: $estimatedTime,
-                    onPatternExtracted: { extractedName, extractedNotation, extractedInstructions in
+                    onPatternExtracted: { extractedName, extractedNotation, extractedInstructions, extractedImages in
                         // Fill in the manual form with extracted data
                         name = extractedName ?? name
                         notation = extractedNotation ?? notation
                         instructions = extractedInstructions ?? instructions
+
+                        // Add extracted images to pattern images
+                        print("🖼️ Pattern extracted with \(extractedImages.count) images")
+                        selectedImages.append(contentsOf: extractedImages)
+                        print("🖼️ Total selectedImages now: \(selectedImages.count)")
+
                         selectedTab = 0 // Switch to manual tab
                     }
                 )
@@ -477,7 +483,7 @@ struct PatternCreationChatView: View {
     @Binding var currentDifficulty: PatternDifficulty
     @Binding var currentMaterials: String
     @Binding var currentEstimatedTime: String
-    let onPatternExtracted: (String?, String?, String?) -> Void
+    let onPatternExtracted: (String?, String?, String?, [UIImage]) -> Void
     @State private var messageText = ""
     @State private var scrollProxy: ScrollViewProxy?
     @FocusState private var isInputFocused: Bool
@@ -658,7 +664,13 @@ struct PatternCreationChatView: View {
             contextMessage += "CURRENT PATTERN DATA:\n" + contextParts.joined(separator: "\n") + "\n\n"
         }
 
-        contextMessage += "USER REQUEST: \(messageText)"
+        // If there's text, use it as the user request
+        // If there are only images, use a default request
+        if !messageText.isEmpty {
+            contextMessage += "USER REQUEST: \(messageText)"
+        } else if !attachedImages.isEmpty {
+            contextMessage += "USER REQUEST: Please analyze this pattern image and populate the pattern fields with the extracted information."
+        }
 
         let text = messageText
         let images = attachedImages
@@ -666,12 +678,20 @@ struct PatternCreationChatView: View {
         attachedImages = []
         isInputFocused = false
 
+        print("📤 Sending message to AI:")
+        print("  - Text: \(text.isEmpty ? "(empty)" : text)")
+        print("  - Images: \(images.count)")
+        print("  - Full context: \(contextMessage.prefix(200))...")
+
         Task {
             await viewModel.sendMessage(contextMessage, images: images)
 
             // Try to extract pattern info from the response and populate manual form
             if let lastMessage = viewModel.messages.last, lastMessage.type == .assistant {
+                print("📥 Got AI response, extracting pattern...")
                 extractPatternFromResponse(lastMessage.content)
+            } else {
+                print("⚠️ No assistant message found in response")
             }
         }
     }
@@ -715,9 +735,9 @@ struct PatternCreationChatView: View {
             return nil
         }
 
-        let extractedName = extractSection(from: response, headers: ["NAME", "Pattern Name", "Name"])
-        let extractedNotation = extractSection(from: response, headers: ["NOTATION", "Pattern Notation", "Notation"])
-        let extractedInstructions = extractSection(from: response, headers: ["INSTRUCTIONS", "Detailed Instructions", "Instructions"])
+        let extractedName = extractSection(from: response, headers: ["NAME", "Pattern Name", "Name", "Title", "TITLE"])
+        let extractedNotation = extractSection(from: response, headers: ["NOTATION", "Pattern Notation", "Notation", "Pattern"])
+        let extractedInstructions = extractSection(from: response, headers: ["INSTRUCTIONS", "Detailed Instructions", "Instructions", "Steps", "STEPS"])
 
         // Directly update bindings if data found
         if let name = extractedName, !name.isEmpty {
@@ -733,9 +753,9 @@ struct PatternCreationChatView: View {
             currentInstructions = instructions
         }
 
-        // Also trigger callback for tab switching
+        // Also trigger callback for tab switching and pass attached images
         if extractedName != nil || extractedNotation != nil || extractedInstructions != nil {
-            onPatternExtracted(extractedName, extractedNotation, extractedInstructions)
+            onPatternExtracted(extractedName, extractedNotation, extractedInstructions, attachedImages)
         }
     }
 }

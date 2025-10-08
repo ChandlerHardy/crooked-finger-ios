@@ -113,50 +113,13 @@ struct Base64ImageViewer: View {
     @Binding var currentIndex: Int
     @Environment(\.dismiss) private var dismiss
 
-    @State private var scale: CGFloat = 1.0
-    @State private var lastScale: CGFloat = 1.0
-    @State private var offset: CGSize = .zero
-    @State private var lastOffset: CGSize = .zero
-
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
 
             TabView(selection: $currentIndex) {
                 ForEach(Array(images.enumerated()), id: \.offset) { index, base64String in
-                    Base64ImageView(base64String: base64String, contentMode: .fit)
-                        .scaleEffect(scale)
-                        .offset(offset)
-                        .gesture(
-                            MagnificationGesture()
-                                .onChanged { value in
-                                    let delta = value / lastScale
-                                    lastScale = value
-                                    scale = min(max(scale * delta, 1), 5)
-                                }
-                                .onEnded { _ in
-                                    lastScale = 1.0
-                                    if scale < 1 {
-                                        withAnimation {
-                                            scale = 1
-                                        }
-                                    }
-                                }
-                        )
-                        .gesture(
-                            DragGesture()
-                                .onChanged { value in
-                                    if scale > 1 {
-                                        offset = CGSize(
-                                            width: lastOffset.width + value.translation.width,
-                                            height: lastOffset.height + value.translation.height
-                                        )
-                                    }
-                                }
-                                .onEnded { _ in
-                                    lastOffset = offset
-                                }
-                        )
+                    ZoomableImageView(base64String: base64String)
                         .tag(index)
                 }
             }
@@ -191,12 +154,77 @@ struct Base64ImageViewer: View {
                     .padding(.bottom, 50)
             }
         }
-        .onChange(of: currentIndex) {
-            // Reset zoom when changing images
-            withAnimation {
-                scale = 1.0
-                offset = .zero
-                lastOffset = .zero
+    }
+}
+
+/// Individual zoomable image view for use within TabView
+private struct ZoomableImageView: View {
+    let base64String: String
+
+    @State private var uiImage: UIImage?
+    @State private var scale: CGFloat = 1.0
+    @State private var lastScale: CGFloat = 1.0
+    @State private var offset: CGSize = .zero
+    @State private var lastOffset: CGSize = .zero
+    @GestureState private var dragState: CGSize = .zero
+
+    var body: some View {
+        Group {
+            if let uiImage = uiImage {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .scaleEffect(scale)
+                    .offset(x: offset.width + dragState.width, y: offset.height + dragState.height)
+                    .gesture(
+                        MagnificationGesture()
+                            .onChanged { value in
+                                scale = min(max(lastScale * value, 1), 5)
+                            }
+                            .onEnded { value in
+                                lastScale = scale
+                                if scale < 1 {
+                                    withAnimation(.spring(response: 0.3)) {
+                                        scale = 1
+                                        lastScale = 1
+                                    }
+                                }
+                            }
+                    )
+                    .simultaneousGesture(
+                        DragGesture()
+                            .updating($dragState) { value, state, _ in
+                                if scale > 1 {
+                                    state = value.translation
+                                }
+                            }
+                            .onEnded { value in
+                                if scale > 1 {
+                                    offset.width += value.translation.width
+                                    offset.height += value.translation.height
+                                }
+                            }
+                    )
+                    .onTapGesture(count: 2) {
+                        // Double tap to reset zoom
+                        withAnimation(.spring(response: 0.3)) {
+                            scale = 1.0
+                            lastScale = 1.0
+                            offset = .zero
+                        }
+                    }
+            } else {
+                ProgressView()
+                    .progressViewStyle(.circular)
+                    .tint(.white)
+            }
+        }
+        .task {
+            // Load image once
+            if uiImage == nil {
+                uiImage = await Task.detached(priority: .userInitiated) { @Sendable in
+                    ImageService.shared.base64ToImage(base64String: base64String)
+                }.value
             }
         }
     }

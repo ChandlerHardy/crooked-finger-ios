@@ -238,6 +238,8 @@ struct ChatView: View {
 struct MessageRow: View {
     let message: ChatMessage
     @State private var appeared = false
+    @State private var showImageViewer = false
+    @State private var selectedImageIndex = 0
 
     // Pre-compute markdown once
     private var markdownContent: AttributedString {
@@ -245,7 +247,8 @@ struct MessageRow: View {
     }
 
     var body: some View {
-        if message.type == .assistant {
+        Group {
+            if message.type == .assistant {
             // Assistant: Full-width, no bubble
             VStack(alignment: .leading, spacing: 8) {
                 Text(markdownContent)
@@ -274,7 +277,7 @@ struct MessageRow: View {
                     // Attached images if any
                     if let images = message.attachedImages, !images.isEmpty {
                         VStack(spacing: 4) {
-                            ForEach(Array(images.enumerated()), id: \.offset) { _, base64String in
+                            ForEach(Array(images.enumerated()), id: \.offset) { index, base64String in
                                 if let imageData = Data(base64Encoded: base64String),
                                    let uiImage = UIImage(data: imageData) {
                                     Image(uiImage: uiImage)
@@ -282,6 +285,10 @@ struct MessageRow: View {
                                         .aspectRatio(contentMode: .fit)
                                         .frame(maxWidth: 250)
                                         .clipShape(RoundedRectangle(cornerRadius: 12))
+                                        .onTapGesture {
+                                            selectedImageIndex = index
+                                            showImageViewer = true
+                                        }
                                 }
                             }
                         }
@@ -317,6 +324,12 @@ struct MessageRow: View {
                         appeared = true
                     }
                 }
+            }
+        }
+        }
+        .fullScreenCover(isPresented: $showImageViewer) {
+            if let images = message.attachedImages, !images.isEmpty {
+                Base64ImageViewer(images: images, currentIndex: $selectedImageIndex)
             }
         }
     }

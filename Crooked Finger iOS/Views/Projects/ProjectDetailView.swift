@@ -13,6 +13,7 @@ struct ProjectDetailView: View {
     @State private var isFavorite: Bool
     @State private var status: ProjectStatus
     @State private var showImagePicker = false
+    @State private var showMediaPicker = false
     @State private var selectedImages: [UIImage] = []
     @State private var projectImages: [String] = []
     @State private var showImageViewer = false
@@ -64,6 +65,7 @@ struct ProjectDetailView: View {
                     .tabViewStyle(.page)
                     .indexViewStyle(.page(backgroundDisplayMode: .always))
                     .frame(height: 250)
+                    .id(projectImages.count) // Force refresh when image count changes
                     .transition(.move(edge: .top).combined(with: .opacity))
                 }
 
@@ -160,8 +162,8 @@ struct ProjectDetailView: View {
         } message: {
             Text("This project will be permanently deleted. This action cannot be undone.")
         }
-        .sheet(isPresented: $showImagePicker) {
-            ImagePicker(selectedImages: $selectedImages, maxSelection: 10)
+        .sheet(isPresented: $showMediaPicker) {
+            MediaPickerView(selectedImages: $selectedImages)
         }
         .fullScreenCover(isPresented: $showImageViewer) {
             Base64ImageViewer(images: projectImages, currentIndex: $selectedImageIndex)
@@ -376,7 +378,7 @@ struct ProjectDetailView: View {
                 Spacer()
 
                 Button {
-                    showImagePicker = true
+                    showMediaPicker = true
                 } label: {
                     Label("Add Photos", systemImage: "photo.badge.plus")
                         .font(.subheadline)
@@ -496,24 +498,33 @@ struct ProjectDetailView: View {
         Task {
             guard let backendId = project.backendId else { return }
 
-            // Convert new images to base64
-            let newBase64Images = images.compactMap { ImageService.shared.imageToBase64(image: $0) }
+            print("🖼️ Uploading \(images.count) new images to project")
+            print("🖼️ Current project has \(projectImages.count) existing images")
 
-            // Append to existing images
-            var allImages = projectImages
-            allImages.append(contentsOf: newBase64Images)
+            // Convert existing base64 images back to UIImages
+            let existingUIImages = projectImages.compactMap { ImageService.shared.base64ToImage(base64String: $0) }
 
-            // Update backend
+            // Combine existing and new images
+            let allUIImages = existingUIImages + images
+
+            print("🖼️ Total images after combining: \(allUIImages.count)")
+
+            // Update backend with all images
             let success = await viewModel.updateProject(
                 projectId: backendId,
-                images: images
+                images: allUIImages
             )
 
             if success {
                 await MainActor.run {
-                    projectImages = allImages
-                    selectedImages = [] // Clear selected images
+                    // Convert all images to base64 for display
+                    let allBase64Images = allUIImages.compactMap { ImageService.shared.imageToBase64(image: $0) }
+                    projectImages = allBase64Images
+                    selectedImages = []
+                    print("✅ Project updated with \(projectImages.count) total images")
                 }
+            } else {
+                print("❌ Failed to update project images")
             }
         }
     }

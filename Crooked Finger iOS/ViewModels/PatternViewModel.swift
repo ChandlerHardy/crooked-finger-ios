@@ -104,7 +104,9 @@ class PatternViewModel {
 
             if !images.isEmpty {
                 // Convert UIImages to base64 strings
+                print("📸 Converting \(images.count) images to base64...")
                 imageDataJSON = imageService.imagesToJSON(images: images)
+                print("📸 Image JSON length: \(imageDataJSON?.count ?? 0)")
             } else if let imageData = imageData {
                 // Fallback to single image string (for backwards compatibility)
                 let imageArray = [imageData]
