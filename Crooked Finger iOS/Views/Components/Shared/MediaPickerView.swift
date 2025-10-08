@@ -71,8 +71,10 @@ struct MediaPickerView: View {
             documentPickerImageCount = selectedImages.count
         }
         .onChange(of: selectedImages.count) { oldCount, newCount in
+            print("🎯 MediaPickerView: selectedImages count changed from \(oldCount) to \(newCount)")
             // If images were added (from any source), dismiss
             if newCount > oldCount {
+                print("✅ MediaPickerView: Dismissing (images added)")
                 dismiss()
             }
         }
