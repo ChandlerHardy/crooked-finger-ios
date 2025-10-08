@@ -260,10 +260,26 @@ Crooked Finger iOSUITests/
      - Updated `create_project` mutation to accept instructions on create (mutations.py)
      - Eliminates need for separate update request when saving patterns with instructions
      - More performant: 1 request instead of 2
-13. ⏳ AI Usage dashboard integration (pending)
-14. ⏳ Local data persistence with SwiftData (pending)
+13. ✅ **Multimodal AI Image Support** (Oct 8, 2025)
+   - Backend: Added `image_data` parameter to `chatWithAssistantEnhanced` GraphQL mutation
+   - Backend: Implemented proper Gemini SDK image handling with `types.Part.from_bytes()`
+   - Backend: Enhanced system prompts for pattern extraction with explicit format instructions
+   - iOS: MediaPickerView with camera/photo library/browse files (including PDF support)
+   - iOS: PDF to image conversion using PDFKit (security-scoped resource handling for device compatibility)
+   - iOS: Pattern creation AI assistant can analyze images and auto-populate pattern fields
+   - iOS: Chat images displayed with tap-to-enlarge fullscreen viewer
+   - iOS: Optimized Base64ImageViewer with separate ZoomableImageView for smooth zoom/pan
+14. ✅ **Image Persistence & Management** (Oct 8, 2025)
+   - Fixed critical bug: Pattern/project image uploads now combine existing + new images
+   - MediaPickerView added to existing pattern/project detail views (not just creation)
+   - Multiple PDFs can be added to same pattern/project
+   - PDFs and photos can be mixed in any order and persist correctly
+   - Pattern images from AI assistant automatically saved to pattern gallery
+   - Comprehensive debug logging for image pipeline troubleshooting
+15. ⏳ AI Usage dashboard integration (pending)
+16. ⏳ Local data persistence with SwiftData (pending)
 
-**Key Achievement**: Complete authentication system with backend Argon2 migration. Full image support across all features (Projects, Patterns, Chat) with base64 encoding and compression. Major performance improvements for smooth app startup and responsive keyboard. Project-specific conversations enable contextual AI assistance per project.
+**Key Achievement**: Complete multimodal AI integration with image analysis, PDF support, and robust image persistence across patterns, projects, and chat. Pattern creation AI assistant can extract patterns from images and auto-populate all fields.
 
 ### 🔄 Phase 4 (Advanced Features & Polish) - IN PROGRESS (Oct 5 - Oct 20, 2025):
 1. ✅ **Image Upload & Management** - COMPLETED
@@ -317,6 +333,50 @@ Crooked Finger iOSUITests/
 8. App Store submission and launch
 
 **Key Goal**: Production-ready app with App Store approval and public release.
+
+## Known Issues & Debugging Notes
+
+### PatternDetailView Layout Bug (Oct 8, 2025) - ACTIVE INVESTIGATION
+
+**Issue**: When adding images to an existing pattern, the Instructions section sometimes renders directly under the pattern title instead of in its proper location below Notation.
+
+**Symptoms**:
+- Happens when new images are added via MediaPickerView
+- Instructions text appears in the wrong position (under title, above difficulty/materials)
+- Layout corrupts in real-time as images are added to carousel
+- Workaround: Restart app and layout is correct
+
+**What We've Tried** (all unsuccessful):
+1. ✗ `.id(patternImages.count)` on TabView - still corrupts
+2. ✗ `.id("pattern-\(pattern.id)-images-\(patternImages.count)")` on VStack - still corrupts
+3. ✗ `@State private var viewKey = UUID()` + update on image change - still corrupts
+4. ✗ Temporary clear/reset pattern images array with delay - still corrupts
+5. ✗ Removed GeometryReader from TabView - still corrupts
+6. ✗ Separated TabView and content into different VStacks - still corrupts
+
+**Current Theory**:
+- TabView asynchronous image loading may be racing with VStack layout calculation
+- SwiftUI may be caching incorrect layout after first render
+- The conditional `if !patternImages.isEmpty` may be causing view identity confusion
+
+**File**: `PatternDetailView.swift:49-254`
+
+**Next Steps to Try**:
+1. Pre-load all images before showing TabView (convert all base64 to UIImage eagerly)
+2. Replace nested VStacks with LazyVStack
+3. Add explicit frame heights to each section
+4. Use List instead of ScrollView + VStack
+5. Completely separate views for "has images" vs "no images" states
+
+**Relevant Console Logs**:
+```
+🖼️ Uploading 1 new images to pattern
+🖼️ Current pattern has 1 existing images
+🖼️ Total images after combining: 2
+📸 Image compressed: 4828KB → 654KB (ratio: 13.5%)
+✅ Pattern updated with 2 total images
+```
+(Images are saving correctly - bug is purely visual/layout)
 
 ## Environment Configuration
 **IMPORTANT: Temporary Backend Configuration (Oct 5, 2025)**
