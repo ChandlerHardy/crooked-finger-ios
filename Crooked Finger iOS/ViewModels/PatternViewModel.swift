@@ -92,15 +92,21 @@ class PatternViewModel {
         difficulty: PatternDifficulty?,
         materials: String?,
         estimatedTime: String?,
-        imageData: String? = nil
+        imageData: String? = nil,
+        images: [UIImage] = []
     ) async -> Bool {
         isLoading = true
         errorMessage = nil
 
         do {
-            // Convert single image to JSON array format if provided
+            // Convert images to JSON array format
             var imageDataJSON: String?
-            if let imageData = imageData {
+
+            if !images.isEmpty {
+                // Convert UIImages to base64 strings
+                imageDataJSON = imageService.imagesToJSON(images: images)
+            } else if let imageData = imageData {
+                // Fallback to single image string (for backwards compatibility)
                 let imageArray = [imageData]
                 if let jsonData = try? JSONEncoder().encode(imageArray),
                    let jsonString = String(data: jsonData, encoding: .utf8) {

@@ -172,43 +172,31 @@ struct ProjectRow: View {
 struct CreateProjectSheet: View {
     let viewModel: ProjectViewModel
     @Environment(\.dismiss) var dismiss
+    @State private var selectedTab = 0
     @State private var name = ""
     @State private var description = ""
     @State private var pattern = ""
     @State private var difficulty: PatternDifficulty = .beginner
     @State private var notes = ""
     @State private var isCreating = false
+    @State private var showPatternPicker = false
+    @State private var patternViewModel = PatternViewModel()
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    TextField("Name", text: $name)
-                    TextField("Description", text: $description)
-
-                    Picker("Difficulty", selection: $difficulty) {
-                        ForEach(PatternDifficulty.allCases, id: \.self) { level in
-                            Text(level.rawValue.capitalized).tag(level)
-                        }
-                    }
-                } header: {
-                    Text("Project Details")
+            VStack(spacing: 0) {
+                // Tab Picker
+                Picker("Source", selection: $selectedTab) {
+                    Text("From Scratch").tag(0)
+                    Text("From Pattern").tag(1)
                 }
+                .pickerStyle(.segmented)
+                .padding()
 
-                Section {
-                    TextEditor(text: $pattern)
-                        .frame(minHeight: 100)
-                } header: {
-                    Text("Pattern")
-                } footer: {
-                    Text("The crochet pattern you'll be following")
-                }
-
-                Section {
-                    TextEditor(text: $notes)
-                        .frame(minHeight: 80)
-                } header: {
-                    Text("Notes (Optional)")
+                if selectedTab == 0 {
+                    manualEntryView
+                } else {
+                    patternLibraryView
                 }
             }
             .navigationTitle("New Project")
@@ -219,26 +207,165 @@ struct CreateProjectSheet: View {
                         dismiss()
                     }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Create") {
-                        Task {
-                            isCreating = true
-                            let success = await viewModel.createProject(
-                                name: name,
-                                pattern: pattern,
-                                difficulty: difficulty,
-                                notes: notes.isEmpty ? "New project" : notes
-                            )
-                            isCreating = false
-                            if success {
-                                dismiss()
+                if selectedTab == 0 {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Create") {
+                            Task {
+                                await createProject()
                             }
                         }
+                        .disabled(name.isEmpty || pattern.isEmpty || isCreating)
                     }
-                    .disabled(name.isEmpty || pattern.isEmpty || isCreating)
                 }
             }
         }
+    }
+
+    private var manualEntryView: some View {
+        Form {
+            Section {
+                TextField("Name", text: $name)
+                TextField("Description", text: $description)
+
+                Picker("Difficulty", selection: $difficulty) {
+                    ForEach(PatternDifficulty.allCases, id: \.self) { level in
+                        Text(level.rawValue.capitalized).tag(level)
+                    }
+                }
+            } header: {
+                Text("Project Details")
+            }
+
+            Section {
+                TextEditor(text: $pattern)
+                    .frame(minHeight: 100)
+            } header: {
+                Text("Pattern")
+            } footer: {
+                Text("The crochet pattern you'll be following")
+            }
+
+            Section {
+                TextEditor(text: $notes)
+                    .frame(minHeight: 80)
+            } header: {
+                Text("Notes (Optional)")
+            }
+        }
+    }
+
+    private var patternLibraryView: some View {
+        Group {
+            if patternViewModel.isLoading && patternViewModel.patterns.isEmpty {
+                ProgressView("Loading patterns...")
+                    .foregroundStyle(Color.appMuted)
+            } else if patternViewModel.patterns.isEmpty {
+                EmptyStateView(
+                    icon: "doc.text",
+                    title: "No Patterns Yet",
+                    message: "Create some patterns first, then start projects from them"
+                )
+            } else {
+                List {
+                    ForEach(patternViewModel.patterns) { pattern in
+                        Button {
+                            createProjectFromPattern(pattern)
+                        } label: {
+                            PatternSelectionRow(pattern: pattern)
+                        }
+                    }
+                }
+                .scrollContentBackground(.hidden)
+            }
+        }
+        .background(Color.appBackground)
+    }
+
+    private func createProject() async {
+        isCreating = true
+        let success = await viewModel.createProject(
+            name: name,
+            pattern: pattern,
+            difficulty: difficulty,
+            notes: notes.isEmpty ? "New project" : notes
+        )
+        isCreating = false
+        if success {
+            dismiss()
+        }
+    }
+
+    private func createProjectFromPattern(_ pattern: Pattern) {
+        Task {
+            isCreating = true
+            let success = await viewModel.createProject(
+                name: "\(pattern.name) - My Project",
+                pattern: pattern.notation,
+                difficulty: pattern.difficulty ?? .beginner,
+                notes: "Started from pattern: \(pattern.name)"
+            )
+            isCreating = false
+            if success {
+                dismiss()
+            }
+        }
+    }
+}
+
+// MARK: - Pattern Selection Row
+struct PatternSelectionRow: View {
+    let pattern: Pattern
+
+    var body: some View {
+        HStack(spacing: 12) {
+            // Thumbnail
+            if let firstImage = pattern.images.first,
+               let imageData = Data(base64Encoded: firstImage),
+               let uiImage = UIImage(data: imageData) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 80, height: 80)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            } else {
+                ZStack {
+                    Color.primaryBrown.opacity(0.1)
+                    Image(systemName: "doc.text.fill")
+                        .font(.title2)
+                        .foregroundStyle(Color.primaryBrown)
+                }
+                .frame(width: 80, height: 80)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(pattern.name)
+                    .font(.headline)
+                    .foregroundStyle(Color.appText)
+                    .lineLimit(2)
+
+                if let difficulty = pattern.difficulty {
+                    Text(difficulty.rawValue.capitalized)
+                        .font(.caption)
+                        .foregroundStyle(Color.appMuted)
+                }
+
+                if let materials = pattern.materials {
+                    Text(materials)
+                        .font(.caption2)
+                        .foregroundStyle(Color.appMuted)
+                        .lineLimit(1)
+                }
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(Color.appMuted)
+        }
+        .padding(.vertical, 8)
+        .contentShape(Rectangle())
     }
 }
 

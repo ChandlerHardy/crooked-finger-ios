@@ -11,10 +11,11 @@ struct ChatView: View {
     var viewModel: ChatViewModel
     @State private var messageText = ""
     @State private var scrollProxy: ScrollViewProxy?
-    @State private var showImagePicker = false
+    @State private var showMediaPicker = false
     @State private var selectedImages: [UIImage] = []
     @State private var attachedImages: [UIImage] = []
     @State private var showConversationHistory = false
+    @State private var isSending = false
     @FocusState private var isInputFocused: Bool
 
     init(viewModel: ChatViewModel? = nil) {
@@ -122,7 +123,7 @@ struct ChatView: View {
                 HStack(spacing: 16) {
                     // Attachment button
                     Button {
-                        showImagePicker = true
+                        showMediaPicker = true
                     } label: {
                         Image(systemName: "plus")
                             .font(.title3)
@@ -156,10 +157,10 @@ struct ChatView: View {
                             .frame(width: 32, height: 32)
                             .background(
                                 Circle()
-                                    .fill(messageText.isEmpty && attachedImages.isEmpty ? Color.appMuted : Color.primaryBrown)
+                                    .fill(messageText.isEmpty && attachedImages.isEmpty && !isSending ? Color.appMuted : Color.primaryBrown)
                             )
                     }
-                    .disabled((messageText.isEmpty && attachedImages.isEmpty) || viewModel.isLoading)
+                    .disabled((messageText.isEmpty && attachedImages.isEmpty && !isSending) || viewModel.isLoading)
                 }
             }
             .padding(.horizontal, 16)
@@ -196,8 +197,8 @@ struct ChatView: View {
                 }
             }
         }
-        .sheet(isPresented: $showImagePicker) {
-            ImagePicker(selectedImages: $selectedImages, maxSelection: 5)
+        .sheet(isPresented: $showMediaPicker) {
+            MediaPickerView(selectedImages: $selectedImages)
         }
         .sheet(isPresented: $showConversationHistory) {
             ConversationHistoryView(viewModel: viewModel, isPresented: $showConversationHistory)
@@ -216,6 +217,8 @@ struct ChatView: View {
         // Haptic feedback on send
         Haptics.impact(.light)
 
+        isSending = true
+
         let text = messageText
         let images = attachedImages
 
@@ -226,6 +229,7 @@ struct ChatView: View {
 
         Task {
             await viewModel.sendMessage(text, images: images)
+            isSending = false
         }
     }
 }
@@ -267,17 +271,39 @@ struct MessageRow: View {
                 Spacer(minLength: 60)
 
                 VStack(alignment: .trailing, spacing: 6) {
-                    Text(message.content)
-                        .padding(14)
-                        .background(
-                            LinearGradient(
-                                colors: [Color.primaryBrown, Color.primaryBrown.opacity(0.9)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
+                    // Attached images if any
+                    if let images = message.attachedImages, !images.isEmpty {
+                        VStack(spacing: 4) {
+                            ForEach(Array(images.enumerated()), id: \.offset) { _, base64String in
+                                if let imageData = Data(base64Encoded: base64String),
+                                   let uiImage = UIImage(data: imageData) {
+                                    Image(uiImage: uiImage)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(maxWidth: 250)
+                                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                                }
+                            }
+                        }
+                        .padding(8)
+                        .background(Color.primaryBrown.opacity(0.2))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+
+                    // Text message
+                    if !message.content.isEmpty {
+                        Text(message.content)
+                            .padding(14)
+                            .background(
+                                LinearGradient(
+                                    colors: [Color.primaryBrown, Color.primaryBrown.opacity(0.9)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
                             )
-                        )
-                        .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                            .foregroundStyle(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 18))
+                    }
 
                     Text(message.timestamp, style: .time)
                         .font(.caption2)

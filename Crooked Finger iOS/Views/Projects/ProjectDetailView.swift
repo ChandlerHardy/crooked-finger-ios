@@ -39,10 +39,14 @@ struct ProjectDetailView: View {
     }
 
     var body: some View {
-        ScrollView {
+        ZStack {
+            // Background color
+            Color.appBackground
+                .ignoresSafeArea()
+
             VStack(spacing: 0) {
-                // Hero Image
-                if !projectImages.isEmpty {
+                // Hero Image - slide up when switching to chat
+                if selectedTab != 2 && !projectImages.isEmpty {
                     TabView(selection: $selectedImageIndex) {
                         ForEach(Array(projectImages.enumerated()), id: \.offset) { index, base64String in
                             if let image = ImageService.shared.base64ToImage(base64String: base64String) {
@@ -60,41 +64,48 @@ struct ProjectDetailView: View {
                     .tabViewStyle(.page)
                     .indexViewStyle(.page(backgroundDisplayMode: .always))
                     .frame(height: 250)
+                    .transition(.move(edge: .top).combined(with: .opacity))
                 }
 
-                // Header
-                headerSection
-                    .padding()
-                    .padding(.top, projectImages.isEmpty ? 0 : 8)
+                // Header - slide up when switching to chat
+                if selectedTab != 2 {
+                    headerSection
+                        .padding()
+                        .padding(.top, projectImages.isEmpty ? 0 : 8)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
 
-                // Compact Status Badge
-                HStack {
-                    StatusBadge(status: status)
+                // Status Badge - slide up when switching to chat
+                if selectedTab != 2 {
+                    HStack {
+                        StatusBadge(status: status)
 
-                    Spacer()
+                        Spacer()
 
-                    Menu {
-                        ForEach(ProjectStatus.allCases, id: \.self) { projectStatus in
-                            Button {
-                                status = projectStatus
-                                updateStatus(projectStatus)
-                            } label: {
-                                Label(projectStatus.rawValue.capitalized, systemImage: projectStatus == status ? "checkmark" : "")
+                        Menu {
+                            ForEach(ProjectStatus.allCases, id: \.self) { projectStatus in
+                                Button {
+                                    status = projectStatus
+                                    updateStatus(projectStatus)
+                                } label: {
+                                    Label(projectStatus.rawValue.capitalized, systemImage: projectStatus == status ? "checkmark" : "")
+                                }
                             }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text("Change Status")
+                                Image(systemName: "chevron.down")
+                            }
+                            .font(.subheadline)
+                            .foregroundStyle(Color.primaryBrown)
                         }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Text("Change Status")
-                            Image(systemName: "chevron.down")
-                        }
-                        .font(.subheadline)
-                        .foregroundStyle(Color.primaryBrown)
                     }
+                    .padding(.horizontal)
+                    .padding(.bottom)
+                    .transition(.move(edge: .top).combined(with: .opacity))
                 }
-                .padding(.horizontal)
-                .padding(.bottom)
 
-                // Tab Picker
+                // Tab Picker - always visible
                 Picker("View", selection: $selectedTab) {
                     Text("Pattern").tag(0)
                     Text("Images").tag(1)
@@ -103,26 +114,32 @@ struct ProjectDetailView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal)
-                .padding(.bottom, 8)
+                .padding(.vertical, 8)
 
-                // Tab Content (non-scrollable sections)
-                Group {
-                    switch selectedTab {
-                    case 0:
-                        patternTabContent
-                    case 1:
-                        imageTabContent
-                    case 2:
-                        chatTabContent
-                    case 3:
-                        notesTabContent
-                    default:
-                        patternTabContent
+                // Content area
+                if selectedTab != 2 {
+                    ScrollView {
+                        Group {
+                            switch selectedTab {
+                            case 0:
+                                patternTabContent
+                            case 1:
+                                imageTabContent
+                            case 3:
+                                notesTabContent
+                            default:
+                                patternTabContent
+                            }
+                        }
                     }
+                    .transition(.opacity)
+                } else {
+                    chatTabContent
+                        .transition(.opacity)
                 }
             }
         }
-        .background(Color.appBackground)
+        .animation(.easeInOut(duration: 0.3), value: selectedTab)
         .navigationTitle("Project Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

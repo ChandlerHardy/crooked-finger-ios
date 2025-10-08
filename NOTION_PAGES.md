@@ -462,4 +462,40 @@ Create a Notion database with these properties:
 
 ---
 
+## 📅 Page 9: Development Log
+
+Create a Notion database to track daily development sessions:
+
+**Properties:**
+- **Date** (Date): Session date
+- **Platform** (Multi-select): iOS, Web, Backend, Both
+- **Summary** (Title): Brief description
+- **Details** (Text): Full session notes
+- **Commits** (Text): Commit hashes
+- **Status** (Select): ✅ Deployed, 🚧 In Progress, 📋 Documented
+
+**Recent Entries:**
+
+### October 7, 2025 - UI Polish & Backend Improvements
+**Platform**: Both
+**Status**: ✅ Deployed
+**Commits**:
+- Backend: `d535ab54`, `f101a15d`
+- iOS: `8d6cbab`, `8658f0f`
+
+**Backend Improvements:**
+- Fixed YouTube pattern parsing with improved regex (lookahead patterns)
+- Fixed instruction duplication bug
+- Fixed title overflow issue (entire pattern in NAME field)
+- Added conversation_id filtering to chatMessages query
+- Added AIModelConfig database model for persisting AI settings
+
+**iOS Improvements:**
+- Added notation/instructions toggle for patterns
+- Reduced spacing in project detail view
+- Optimized image gallery padding
+- Updated CLAUDE.md with recent improvements
+
+---
+
 Copy these sections into Notion and customize as needed!

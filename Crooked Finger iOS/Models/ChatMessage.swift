@@ -20,6 +20,7 @@ struct ChatMessage: Identifiable, Codable {
     var isPattern: Bool
     var diagramSvg: String?
     var diagramPng: String?
+    var attachedImages: [String]? // Base64 encoded images
 
     init(
         id: String = UUID().uuidString,
@@ -28,7 +29,8 @@ struct ChatMessage: Identifiable, Codable {
         timestamp: Date = Date(),
         isPattern: Bool = false,
         diagramSvg: String? = nil,
-        diagramPng: String? = nil
+        diagramPng: String? = nil,
+        attachedImages: [String]? = nil
     ) {
         self.id = id
         self.type = type
@@ -37,5 +39,6 @@ struct ChatMessage: Identifiable, Codable {
         self.isPattern = isPattern
         self.diagramSvg = diagramSvg
         self.diagramPng = diagramPng
+        self.attachedImages = attachedImages
     }
 }

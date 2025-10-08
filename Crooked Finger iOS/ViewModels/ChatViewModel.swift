@@ -89,11 +89,18 @@ class ChatViewModel {
 
     // Send a message to the AI assistant
     func sendMessage(_ text: String, images: [UIImage] = []) async {
-        // Add user message
+        // Convert images to base64 array for display
+        var base64Images: [String]? = nil
+        if !images.isEmpty {
+            base64Images = images.compactMap { imageService.imageToBase64(image: $0) }
+        }
+
+        // Add user message with images
         let userMessage = ChatMessage(
             type: .user,
             content: text,
-            timestamp: Date()
+            timestamp: Date(),
+            attachedImages: base64Images
         )
         messages.append(userMessage)
 
@@ -106,7 +113,7 @@ class ChatViewModel {
                 await createBackendConversation()
             }
 
-            // Convert images to base64 if any
+            // Convert images to JSON for backend if any
             var imageData: String? = nil
             if !images.isEmpty {
                 imageData = imageService.imagesToJSON(images: images)

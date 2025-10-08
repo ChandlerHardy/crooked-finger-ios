@@ -79,8 +79,8 @@ enum GraphQLOperations {
     // MARK: - Mutations
 
     static let chatWithAssistantEnhanced = """
-    mutation ChatWithAssistantEnhanced($message: String!, $conversationId: Int, $context: String) {
-        chatWithAssistantEnhanced(message: $message, conversationId: $conversationId, context: $context) {
+    mutation ChatWithAssistantEnhanced($message: String!, $conversationId: Int, $context: String, $imageData: String) {
+        chatWithAssistantEnhanced(message: $message, conversationId: $conversationId, context: $context, imageData: $imageData) {
             message
             diagramSvg
             diagramPng
