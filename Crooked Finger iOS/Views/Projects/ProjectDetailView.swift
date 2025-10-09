@@ -24,7 +24,9 @@ struct ProjectDetailView: View {
     @State private var editedNotes: String
     @State private var projectChatViewModel: ChatViewModel?
     @State private var showDeleteAlert = false
-    @State private var showNotation = true // Toggle between notation and instructions
+    @State private var patternViewMode = 0 // 0: Notation, 1: Instructions, 2: Counter
+    @State private var stitchCount = 0
+    @State private var rowCount = 0
     @Environment(\.dismiss) var dismiss
     @FocusState private var isPatternFocused: Bool
     @FocusState private var isNotesFocused: Bool
@@ -46,99 +48,102 @@ struct ProjectDetailView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Hero Image - slide up when switching to chat
-                if selectedTab != 2 && !projectImages.isEmpty {
-                    TabView(selection: $selectedImageIndex) {
-                        ForEach(Array(projectImages.enumerated()), id: \.offset) { index, base64String in
-                            if let image = ImageService.shared.base64ToImage(base64String: base64String) {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(height: 250)
-                                    .tag(index)
-                                    .onTapGesture {
-                                        showImageViewer = true
+                ScrollView {
+                    VStack(spacing: 0) {
+                        // Hero Image - slide up when switching to chat
+                        if selectedTab != 2 && !projectImages.isEmpty {
+                            TabView(selection: $selectedImageIndex) {
+                                ForEach(Array(projectImages.enumerated()), id: \.offset) { index, base64String in
+                                    if let image = ImageService.shared.base64ToImage(base64String: base64String) {
+                                        Image(uiImage: image)
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                            .frame(height: 250)
+                                            .tag(index)
+                                            .onTapGesture {
+                                                showImageViewer = true
+                                            }
                                     }
-                            }
-                        }
-                    }
-                    .tabViewStyle(.page)
-                    .indexViewStyle(.page(backgroundDisplayMode: .always))
-                    .frame(height: 250)
-                    .id(projectImages.count) // Force refresh when image count changes
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                }
-
-                // Header - slide up when switching to chat
-                if selectedTab != 2 {
-                    headerSection
-                        .padding()
-                        .padding(.top, projectImages.isEmpty ? 0 : 8)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                }
-
-                // Status Badge - slide up when switching to chat
-                if selectedTab != 2 {
-                    HStack {
-                        StatusBadge(status: status)
-
-                        Spacer()
-
-                        Menu {
-                            ForEach(ProjectStatus.allCases, id: \.self) { projectStatus in
-                                Button {
-                                    status = projectStatus
-                                    updateStatus(projectStatus)
-                                } label: {
-                                    Label(projectStatus.rawValue.capitalized, systemImage: projectStatus == status ? "checkmark" : "")
                                 }
                             }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Text("Change Status")
-                                Image(systemName: "chevron.down")
+                            .tabViewStyle(.page)
+                            .indexViewStyle(.page(backgroundDisplayMode: .always))
+                            .frame(height: 250)
+                            .id(projectImages.count) // Force refresh when image count changes
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                        }
+
+                        // Header - slide up when switching to chat
+                        if selectedTab != 2 {
+                            headerSection
+                                .padding()
+                                .padding(.top, projectImages.isEmpty ? 0 : 8)
+                                .transition(.move(edge: .top).combined(with: .opacity))
+                        }
+
+                        // Status Badge - slide up when switching to chat
+                        if selectedTab != 2 {
+                            HStack {
+                                StatusBadge(status: status)
+
+                                Spacer()
+
+                                Menu {
+                                    ForEach(ProjectStatus.allCases, id: \.self) { projectStatus in
+                                        Button {
+                                            status = projectStatus
+                                            updateStatus(projectStatus)
+                                        } label: {
+                                            Label(projectStatus.rawValue.capitalized, systemImage: projectStatus == status ? "checkmark" : "")
+                                        }
+                                    }
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Text("Change Status")
+                                        Image(systemName: "chevron.down")
+                                    }
+                                    .font(.subheadline)
+                                    .foregroundStyle(Color.primaryBrown)
+                                }
                             }
-                            .font(.subheadline)
-                            .foregroundStyle(Color.primaryBrown)
+                            .padding(.horizontal)
+                            .padding(.bottom)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                        }
+
+                        // Tab Picker - always visible
+                        Picker("View", selection: $selectedTab) {
+                            Text("Pattern").tag(0)
+                            Text("Images").tag(1)
+                            Text("Chat").tag(2)
+                            Text("Notes").tag(3)
+                        }
+                        .pickerStyle(.segmented)
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+
+                        // Content area
+                        if selectedTab != 2 {
+                            Group {
+                                switch selectedTab {
+                                case 0:
+                                    patternTabContent
+                                case 1:
+                                    imageTabContent
+                                case 3:
+                                    notesTabContent
+                                default:
+                                    patternTabContent
+                                }
+                            }
+                            .transition(.opacity)
+                        } else {
+                            chatTabContent
+                                .transition(.opacity)
                         }
                     }
-                    .padding(.horizontal)
-                    .padding(.bottom)
-                    .transition(.move(edge: .top).combined(with: .opacity))
                 }
-
-                // Tab Picker - always visible
-                Picker("View", selection: $selectedTab) {
-                    Text("Pattern").tag(0)
-                    Text("Images").tag(1)
-                    Text("Chat").tag(2)
-                    Text("Notes").tag(3)
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal)
-                .padding(.vertical, 8)
-
-                // Content area
-                if selectedTab != 2 {
-                    ScrollView {
-                        Group {
-                            switch selectedTab {
-                            case 0:
-                                patternTabContent
-                            case 1:
-                                imageTabContent
-                            case 3:
-                                notesTabContent
-                            default:
-                                patternTabContent
-                            }
-                        }
-                    }
-                    .transition(.opacity)
-                } else {
-                    chatTabContent
-                        .transition(.opacity)
-                }
+                .scrollIndicators(.hidden)
             }
         }
         .animation(.easeInOut(duration: 0.3), value: selectedTab)
@@ -227,37 +232,49 @@ struct ProjectDetailView: View {
 
     private var patternTabContent: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Pattern")
-                    .font(.headline)
+            if isEditingPattern {
+                HStack {
+                    Text("Pattern")
+                        .font(.headline)
 
-                Spacer()
+                    Spacer()
 
-                if isEditingPattern {
                     Button("Cancel") {
                         editedPattern = project.pattern
                         isEditingPattern = false
                     }
                     .font(.subheadline)
                     .foregroundStyle(Color.appMuted)
-                }
 
-                Button(isEditingPattern ? "Save" : "Edit") {
-                    if isEditingPattern {
+                    Button("Save") {
                         savePattern()
+                        isEditingPattern.toggle()
                     }
-                    isEditingPattern.toggle()
+                    .font(.subheadline)
+                    .foregroundStyle(Color.primaryBrown)
                 }
-                .font(.subheadline)
-                .foregroundStyle(Color.primaryBrown)
-            }
-            .padding(.horizontal)
+                .padding(.horizontal)
+            } else {
+                HStack {
+                    Spacer()
 
-            // Toggle between Notation and Instructions
-            if !isEditingPattern && project.translatedInstructions != nil {
-                Picker("View Mode", selection: $showNotation) {
-                    Text("Notation").tag(true)
-                    Text("Instructions").tag(false)
+                    Button("Edit") {
+                        isEditingPattern.toggle()
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(Color.primaryBrown)
+                }
+                .padding(.horizontal)
+            }
+
+            // Toggle between Notation, Instructions, and Counter
+            if !isEditingPattern {
+                Picker("View Mode", selection: $patternViewMode) {
+                    Text("Notation").tag(0)
+                    if project.translatedInstructions != nil {
+                        Text("Instructions").tag(1)
+                    }
+                    Text("Counter").tag(2)
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal)
@@ -272,8 +289,135 @@ struct ProjectDetailView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .padding(.horizontal)
                     .focused($isPatternFocused)
+            } else if patternViewMode == 2 {
+                // Counter View
+                VStack(spacing: 20) {
+                    // Stitch Counter
+                    VStack(spacing: 12) {
+                        Text("Stitches")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(Color.appMuted)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                        HStack(spacing: 12) {
+                            Text("\(stitchCount)")
+                                .font(.system(size: 44, weight: .bold, design: .rounded))
+                                .foregroundStyle(Color.appText)
+                                .frame(width: 100, alignment: .center)
+                                .monospacedDigit()
+
+                            Spacer()
+
+                            Button {
+                                stitchCount = max(0, stitchCount - 1)
+                            } label: {
+                                Image(systemName: "minus")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .frame(width: 50, height: 50)
+                                    .background(Circle().fill(Color.appMuted))
+                            }
+
+                            Button {
+                                stitchCount += 1
+                            } label: {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .frame(width: 65, height: 65)
+                                    .background(Circle().fill(Color.primaryBrown))
+                            }
+
+                            Button {
+                                stitchCount += 10
+                            } label: {
+                                Text("+10")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .frame(width: 50, height: 50)
+                                    .background(Circle().fill(Color.primaryBrown.opacity(0.7)))
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                    // Row Counter
+                    VStack(spacing: 12) {
+                        Text("Rows")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(Color.appMuted)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                        HStack(spacing: 12) {
+                            Text("\(rowCount)")
+                                .font(.system(size: 44, weight: .bold, design: .rounded))
+                                .foregroundStyle(Color.appText)
+                                .frame(width: 100, alignment: .center)
+                                .monospacedDigit()
+
+                            Spacer()
+
+                            Button {
+                                rowCount = max(0, rowCount - 1)
+                            } label: {
+                                Image(systemName: "minus")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .frame(width: 50, height: 50)
+                                    .background(Circle().fill(Color.appMuted))
+                            }
+
+                            Button {
+                                rowCount += 1
+                            } label: {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .frame(width: 65, height: 65)
+                                    .background(Circle().fill(Color.primaryBrown))
+                            }
+
+                            Button {
+                                rowCount += 10
+                            } label: {
+                                Text("+10")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .frame(width: 50, height: 50)
+                                    .background(Circle().fill(Color.primaryBrown.opacity(0.7)))
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                    // Reset button
+                    Button {
+                        stitchCount = 0
+                        rowCount = 0
+                    } label: {
+                        HStack {
+                            Image(systemName: "arrow.counterclockwise")
+                            Text("Reset Counters")
+                        }
+                        .font(.subheadline)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.primaryBrown)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.bottom, 20)
             } else {
-                let displayText = showNotation ? project.pattern : (project.translatedInstructions ?? project.pattern)
+                // Notation or Instructions View
+                let displayText = patternViewMode == 0 ? project.pattern : (project.translatedInstructions ?? project.pattern)
 
                 if displayText.isEmpty {
                     Text("No pattern yet. Tap 'Edit' to add one.")
@@ -286,7 +430,7 @@ struct ProjectDetailView: View {
                         .padding(.horizontal)
                 } else {
                     VStack(alignment: .leading, spacing: 8) {
-                        if !showNotation {
+                        if patternViewMode == 1 {
                             HStack {
                                 Image(systemName: "text.alignleft")
                                     .font(.caption)
@@ -298,14 +442,17 @@ struct ProjectDetailView: View {
                             .padding(.horizontal)
                         }
 
-                        Text(displayText.cleanedMarkdown)
-                            .font(showNotation ? .system(.body, design: .monospaced) : .body)
-                            .textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .padding(.horizontal)
+                        ScrollView {
+                            Text(displayText.cleanedMarkdown)
+                                .font(patternViewMode == 0 ? .system(.body, design: .monospaced) : .body)
+                                .textSelection(.enabled)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding()
+                        }
+                        .frame(maxHeight: .infinity)
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .padding(.horizontal)
                     }
                 }
             }
