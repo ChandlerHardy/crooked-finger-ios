@@ -1,4 +1,4 @@
-# Notion Pages Structure for Crooked Finger
+# Notion Pages Structure for Crooked Finger - Updated October 8, 2025
 
 Copy and paste these sections into your Notion workspace.
 
@@ -8,9 +8,9 @@ Copy and paste these sections into your Notion workspace.
 
 ### Status
 - **Web App**: ✅ Production (https://crookedfinger.chandlerhardy.com)
-- **iOS App**: ⚠️ Development (Backend Integration Complete)
+- **iOS App**: 🚧 Active Development (Phase 3 Complete - 90% Feature Parity)
 - **Backend API**: ✅ Production (https://backend.chandlerhardy.com)
-- **Authentication**: 🚧 Blocked (bcrypt library bug)
+- **Authentication**: ✅ Working (migrated from bcrypt to Argon2)
 
 ### Quick Links
 - **GitHub Repos**
@@ -23,89 +23,130 @@ Copy and paste these sections into your Notion workspace.
   - OCI Server: `ssh ubuntu@150.136.38.166 -i ~/.ssh/ampere.key`
   - Backend Location: `/home/ubuntu/crooked-finger/`
 
-### Current Sprint Focus
-1. 🚧 **BLOCKED**: Fix backend bcrypt library bug
-2. 📋 **NEXT**: Port AI Chat to iOS
-3. 📋 **NEXT**: Implement authentication on web app
+### Current Sprint Focus (October 8, 2025)
+1. ✅ **COMPLETE**: Multimodal AI with image analysis
+2. ✅ **COMPLETE**: PDF support for pattern creation
+3. ✅ **COMPLETE**: Image persistence fixes
+4. 🚧 **IN PROGRESS**: Layout bug investigation
+5. 📋 **NEXT**: Image reordering for thumbnails
+6. 📋 **NEXT**: Port iOS features back to web
 
 ---
 
 ## 📱 Page 2: iOS Development
 
 ### Current Status
-✅ **Backend Integration Complete** (October 2025)
+🚧 **Phase 3 Complete - Advanced Features In Progress** (October 2025)
 
-### ✅ Completed Features
+**Major Milestone**: iOS app now has 90% feature parity with web app!
+
+### ✅ Phase 1-3 Complete Features
+
+**Core Features**:
 - [x] SwiftUI app structure with tab navigation
 - [x] Custom GraphQL client (URLSession, no Apollo)
-- [x] Pattern Library (fetch, create, delete)
-- [x] Project Management (fetch, create, update, delete)
+- [x] Pattern Library (fetch, create, delete, update)
+- [x] Project Management (full CRUD)
 - [x] Create project from pattern
-- [x] Pull-to-refresh on lists
+- [x] Pull-to-refresh on all lists
 - [x] Error handling with copy-to-clipboard
-- [x] Empty state views
-- [x] Brown/tan color scheme matching web
-- [x] Authentication UI (login/register) - **DISABLED**
+- [x] Empty state views with custom messaging
+- [x] Custom brown/tan theme matching web
+- [x] Dark mode support (adaptive colors)
+- [x] Haptic feedback on interactions
+
+**Authentication** (Oct 4, 2025):
+- [x] Login/Register UI with SwiftUI forms
+- [x] JWT token management with UserDefaults
+- [x] AuthViewModel with full auth flow
+- [x] Protected navigation (LoginView ↔ TabNavigationView)
+- [x] Logout functionality in Settings
+- [x] Backend migrated from bcrypt to Argon2
+
+**AI & Chat** (Oct 3-8, 2025):
+- [x] AI Chat Interface with Gemini integration
+- [x] Multi-model support (Pro, Flash Preview, Flash, Flash-Lite)
+- [x] Chat history persistence
+- [x] Project-specific conversations
+- [x] **Multimodal AI with image analysis**
+- [x] **Chat images with tap-to-enlarge fullscreen viewer**
+- [x] **Optimized zoom/pan performance**
+- [x] Markdown rendering in chat messages
+- [x] Message animations with fade-in effects
+
+**Pattern Creation**:
+- [x] Manual pattern entry form
+- [x] **AI Assistant tab for pattern creation**
+- [x] **Image upload (camera, photo library, PDFs)**
+- [x] **PDF to image conversion with PDFKit**
+- [x] **AI analyzes images and auto-populates pattern fields**
+- [x] **Pattern images automatically saved from AI chat**
+- [x] Notation translation (AI generates instructions)
+- [x] YouTube transcript extraction
+- [x] Thumbnail download and storage
+
+**Image Management**:
+- [x] **MediaPickerView (camera/photo library/browse files)**
+- [x] **PDF support with multi-page conversion**
+- [x] **Multiple images per pattern/project**
+- [x] **Mix PDFs and photos in any order**
+- [x] **Image persistence bug fixed (combine existing + new)**
+- [x] Image compression (JPEG, 0.8 quality, 1920px max)
+- [x] Base64 encoding for GraphQL
+- [x] **Comprehensive debug logging**
+
+**UI/UX Polish**:
+- [x] Card-style list items with borders
+- [x] Loading states and animations
+- [x] Professional image viewer (zoom/pan/swipe)
+- [x] Notation/instructions toggle view
+- [x] Editable pattern notation and instructions
+- [x] Project status badges
+- [x] Notes section for projects
 
 ### ⚠️ Known Issues
 
-**Authentication Disabled**
-- **Why**: Backend bcrypt library bug on production server
-- **Error**: "password cannot be longer than 72 bytes"
-- **Impact**: Full auth system built but commented out
-- **Files affected**:
-  - `GraphQLClient.swift` lines 53-63 (auth header)
-  - Backend `mutations.py` (auth checks)
-- **Action required**: Fix bcrypt on OCI server, then uncomment auth code
+**Layout Bug** (Active Investigation - Oct 8, 2025)
+- **Issue**: Instructions render under title after adding images
+- **Workaround**: Restart app
+- **Status**: Tried 6 different approaches, all unsuccessful
+- **Details**: See CLAUDE.md "Known Issues & Debugging Notes"
 
-### 🚧 Next Steps (Priority Order)
+### 🚧 Phase 4 - In Progress (Oct 5-20, 2025)
 
-**High Priority**
-1. **AI Chat Interface**
-   - Port web chat UI to SwiftUI
-   - Integrate with Gemini multi-model API
-   - Add chat history persistence
-   - Estimated: 2-3 days
+**Active Development**:
+- [ ] Fix layout bug (PatternDetailView)
+- [ ] Image reordering for thumbnail selection
+- [ ] Preserve state during orientation changes
 
-2. **Re-enable Authentication**
-   - Requires: Backend bcrypt fix
-   - Uncomment auth in GraphQLClient.swift
-   - Update app entry point to show LoginView
-   - Test end-to-end auth flow
-   - Estimated: 1 day (after backend fix)
+**Planned**:
+- [ ] Biometric authentication (Face ID/Touch ID)
+- [ ] JWT token refresh mechanism
+- [ ] Keychain storage for sensitive data
+- [ ] AI Usage Dashboard
+- [ ] Pattern sharing (Share sheet, PDF export)
 
-**Medium Priority**
-3. **YouTube Integration**
-   - Video URL input
-   - Transcript extraction via backend API
-   - Save extracted patterns to library
-   - Estimated: 2 days
+### 📋 Backlog
 
-4. **Professional Image Viewer**
-   - Zoom/pan gestures
-   - Pinch to zoom
-   - Double-tap to reset
-   - Gallery navigation
-   - Estimated: 2-3 days
+**Phase 5 - Offline-First** (Oct 21 - Nov 10):
+- SwiftData as single source of truth
+- Intelligent sync engine
+- Background sync with BGTaskScheduler
+- Network resilience and offline mode
 
-**Low Priority**
-5. **Pattern Diagram Display**
-   - Show matplotlib-generated charts
-   - SVG rendering in SwiftUI
-   - Estimated: 2 days
+**Phase 6 - Native iOS Features** (Nov 11 - Dec 5):
+- Widgets (stitch counter, active project)
+- Siri Shortcuts
+- Apple Watch companion app
+- Live Activities (Dynamic Island)
+- iPad optimizations (Split View, Slide Over)
 
-6. **Pattern Sharing**
-   - Browse public patterns
-   - Import patterns from other users
-   - Requires: Backend pattern sharing API
-   - Estimated: 3-4 days
-
-### 📋 Technical Debt
-- [ ] Add unit tests for ViewModels
-- [ ] Add integration tests for GraphQL client
-- [ ] Implement proper logging system
-- [ ] Add analytics/crash reporting
-- [ ] Optimize image caching
+**Phase 7 - App Store Launch** (Dec 6 - Jan 15, 2026):
+- Performance optimization
+- Accessibility compliance
+- Testing (unit, UI, integration)
+- TestFlight beta
+- App Store submission
 
 ---
 
@@ -124,48 +165,59 @@ Copy and paste these sections into your Notion workspace.
 - [x] Professional matplotlib diagram generation
 - [x] Professional image viewer (zoom/pan)
 - [x] AI usage dashboard with real-time tracking
+- [x] Authentication system (migrated to Argon2)
 
-### 🚧 Next Steps (Priority Order)
+### 📋 Feature Parity Gap (iOS Features to Port)
 
-**High Priority**
-1. **Authentication System**
-   - Requires: Backend bcrypt fix
-   - Add login/register UI
-   - JWT token storage
-   - Protected routes
-   - Estimated: 2-3 days
-
-2. **Pattern Sharing**
-   - Public pattern browsing
-   - Import from other users
-   - Favorites/bookmarks
-   - Requires: Backend sharing API
-   - Estimated: 3-4 days
-
-**Medium Priority**
-3. **Pull-to-Refresh**
-   - Add to pattern/project lists
-   - Match iOS UX
+**High Priority** (iOS has, Web needs):
+1. **Pull-to-Refresh Gestures**
+   - iOS: ✅ Complete on all list views
+   - Web: ❌ Missing
    - Estimated: 1 day
 
-4. **Dark Mode Support**
-   - System color scheme detection
-   - Match iOS native dark mode
+2. **MediaPickerView with PDF Support**
+   - iOS: ✅ Camera/Photo Library/Browse Files with PDF conversion
+   - Web: ⚠️ Has file upload but no PDF handling
    - Estimated: 2 days
 
-**Low Priority**
-5. **Advanced Diagram Types**
-   - Amigurumi diagrams
-   - Garment pattern charts
-   - Complex stitch patterns
-   - Estimated: 5-7 days
+3. **Pattern Creation AI Assistant**
+   - iOS: ✅ Dedicated AI Assistant tab with image analysis
+   - Web: ⚠️ Has chat but not pattern-specific UI
+   - Estimated: 2-3 days
 
-### 📋 Technical Debt
-- [ ] Add proper TypeScript types for all GraphQL operations
-- [ ] Implement error boundary components
-- [ ] Add E2E tests (Playwright)
-- [ ] Optimize bundle size
-- [ ] Add PWA support for offline mode
+4. **Tap-to-Enlarge Chat Images**
+   - iOS: ✅ Fullscreen viewer with optimized zoom/pan
+   - Web: ❌ Chat images not interactive
+   - Estimated: 1-2 days
+
+5. **Image Auto-Populate from AI**
+   - iOS: ✅ Images used in AI chat automatically saved to pattern
+   - Web: ❌ Manual upload only
+   - Estimated: 1 day
+
+**Medium Priority**:
+6. **Haptic Feedback**
+   - iOS: ✅ On send, button taps
+   - Web: N/A (browser limitation)
+
+7. **Dark Mode** (System)
+   - iOS: ✅ Full adaptive color support
+   - Web: ❌ Light mode only
+   - Estimated: 2 days
+
+8. **Markdown Chat Rendering**
+   - iOS: ✅ AttributedString(markdown:)
+   - Web: ✅ react-markdown
+   - Both complete
+
+### 🚧 Shared Feature Gaps (Both Platforms)
+
+**Missing on Both**:
+- [ ] Image reordering for thumbnail selection
+- [ ] Pattern sharing (public/private, favorites)
+- [ ] Advanced diagram types (amigurumi, garment)
+- [ ] PWA/offline mode
+- [ ] Collaborative features
 
 ---
 
@@ -177,181 +229,157 @@ Copy and paste these sections into your Notion workspace.
 ### Infrastructure
 - **Server**: Oracle Cloud Infrastructure (OCI)
 - **IP**: 150.136.38.166
-- **Stack**: FastAPI + Strawberry GraphQL + PostgreSQL
+- **Stack**: FastAPI + Strawberry GraphQL + PostgreSQL 15
 - **Deployment**: Docker Compose
 - **SSL**: Let's Encrypt (auto-renewed)
+- **Password Hashing**: Argon2 (migrated from bcrypt Oct 4, 2025)
 
 ### ✅ Working Features
 - [x] GraphQL API endpoints
 - [x] Multi-model Gemini integration (4 models, 1,600 requests/day)
-- [x] Pattern/Project CRUD (authentication disabled)
-- [x] YouTube transcript extraction
+- [x] **Multimodal image support (types.Part.from_bytes)**
+- [x] Pattern/Project CRUD with authentication
+- [x] YouTube transcript extraction (RapidAPI)
 - [x] Professional diagram generation (matplotlib)
 - [x] AI usage tracking
 - [x] CORS configuration
 - [x] HTTPS with nginx reverse proxy
+- [x] Conversation management (project-specific chats)
 
-### 🚧 Critical Issues
+### 🚧 Recent Improvements (Oct 8, 2025)
 
-**1. bcrypt Library Bug** 🔴 BLOCKING
-- **Symptom**: "password cannot be longer than 72 bytes"
-- **Impact**: Cannot hash OR verify passwords
-- **Affected**: Both login and registration
-- **Tested**: Even simple passwords like "debug" fail
-- **Current Workaround**:
-  - Auth checks commented out in `mutations.py`
-  - Allow null `user_id` in database
-  - All marked with TODO comments
-- **Action Required**:
-  1. SSH to OCI server
-  2. Update bcrypt/passlib libraries
-  3. Test with simple password
-  4. Re-enable auth checks in code
-  5. Deploy updates
-- **Priority**: 🔴 CRITICAL
+**Multimodal AI Support**:
+- Added `image_data` parameter to `chatWithAssistantEnhanced` mutation
+- Proper Gemini SDK image handling with `types.Part.from_bytes()`
+- Enhanced system prompts for pattern extraction
+- Support for multiple images per request
 
-### 🚧 Next Steps
-
-**High Priority**
-1. **Fix bcrypt Library**
-   - Update Python dependencies
-   - Test password hashing/verification
-   - Re-enable auth checks
-   - Deploy to production
-   - Estimated: 1 day
-
-2. **Implement Pattern Sharing API**
-   - Public/private pattern flags
-   - Pattern discovery endpoints
-   - Import pattern mutation
-   - Estimated: 2-3 days
-
-**Medium Priority**
-3. **Add Rate Limiting**
-   - Prevent API abuse
-   - Per-user quotas
-   - Estimated: 1-2 days
-
-4. **Database Backups**
-   - Automated daily backups
-   - Backup retention policy
-   - Restore testing
-   - Estimated: 1 day
-
-**Low Priority**
-5. **API Documentation**
-   - GraphQL schema documentation
-   - Example queries/mutations
-   - Authentication guide
-   - Estimated: 2 days
+**Authentication**:
+- ✅ Migrated from bcrypt to Argon2 (Oct 4, 2025)
+- Fixed GraphQL context_getter db session handling
+- Removed FastAPI Request.user setter issue
+- Fully functional login/register
 
 ### 📋 Technical Debt
 - [ ] Add API versioning
 - [ ] Implement proper logging (structured logs)
-- [ ] Add monitoring/alerting (Prometheus + Grafana?)
-- [ ] Database migrations system
+- [ ] Add monitoring/alerting (Prometheus + Grafana)
+- [ ] Database migrations system (Alembic)
 - [ ] Add API tests
 - [ ] Implement caching layer (Redis)
+- [ ] Rate limiting per user
+- [ ] Automated database backups
 
 ---
 
-## 📊 Page 5: Feature Parity Tracker
+## 📊 Page 5: Feature Parity Tracker - UPDATED Oct 8, 2025
 
-### ✅ Implemented on Both Platforms
+### ✅ Full Parity (Both Platforms Complete)
 
 | Feature | iOS | Web | Notes |
 |---------|-----|-----|-------|
-| Pattern Library | ✅ | ✅ | View, create, delete |
+| Pattern Library | ✅ | ✅ | View, create, delete, update |
 | Project Management | ✅ | ✅ | Full CRUD |
+| AI Chat Interface | ✅ | ✅ | Multi-model Gemini |
+| Chat History | ✅ | ✅ | Persistent conversations |
+| Project-Specific Chat | ✅ | ✅ | Contextual AI per project |
 | GraphQL Integration | ✅ | ✅ | - |
+| Authentication | ✅ | ✅ | JWT with Argon2 |
 | Error Handling | ✅ | ✅ | iOS has copy-to-clipboard |
 | Empty States | ✅ | ✅ | - |
 | Color Scheme | ✅ | ✅ | Brown/tan theme |
+| Image Upload | ✅ | ✅ | Camera, library, files |
+| Image Viewer | ✅ | ✅ | Zoom/pan gestures |
+| Markdown Rendering | ✅ | ✅ | Chat messages |
+| YouTube Extraction | ✅ | ✅ | Transcript + thumbnail |
+| Notation Translation | ✅ | ✅ | AI generates instructions |
 
-### 🌐 Web-Only Features (TODO for iOS)
+### 📱 iOS-Ahead Features (Web TODO)
 
-| Feature | Status | Priority | Estimated Effort |
-|---------|--------|----------|------------------|
-| AI Chat Interface | 📋 Planned | High | 2-3 days |
-| YouTube Transcript Extraction | 📋 Planned | Medium | 2 days |
-| Pattern Diagram Display | 📋 Planned | Low | 2 days |
-| Professional Image Viewer | 📋 Planned | Medium | 2-3 days |
-| AI Usage Dashboard | 📋 Planned | Low | 1-2 days |
-| Pattern Sharing | 📋 Planned | Medium | 3-4 days |
+| Feature | iOS Status | Web Status | Priority | Effort |
+|---------|-----------|------------|----------|--------|
+| **Pull-to-Refresh** | ✅ Complete | ❌ Missing | 🟠 High | 1 day |
+| **PDF Support** | ✅ Complete | ❌ Missing | 🟠 High | 2 days |
+| **Pattern AI Assistant Tab** | ✅ Complete | ⚠️ Partial | 🟠 High | 2-3 days |
+| **Multimodal Image Analysis** | ✅ Complete | ❌ Missing | 🟠 High | 2 days |
+| **Chat Image Tap-to-Enlarge** | ✅ Complete | ❌ Missing | 🟡 Medium | 1-2 days |
+| **Auto-Save Pattern Images** | ✅ Complete | ❌ Missing | 🟡 Medium | 1 day |
+| **Native Dark Mode** | ✅ Complete | ❌ Missing | 🟡 Medium | 2 days |
+| **Haptic Feedback** | ✅ Complete | N/A | - | - |
+| **Optimized Zoom Performance** | ✅ Complete | ⚠️ Good | 🟢 Low | - |
 
-### 📱 iOS-Only Features (TODO for Web)
+### 🌐 Web-Ahead Features (iOS TODO)
 
-| Feature | Status | Priority | Estimated Effort |
-|---------|--------|----------|------------------|
-| Pull-to-Refresh | 📋 Planned | Medium | 1 day |
-| Native Dark Mode | 📋 Planned | Medium | 2 days |
-| SwiftUI Navigation | ✅ Complete | - | - |
+| Feature | Web Status | iOS Status | Priority | Effort |
+|---------|------------|-----------|----------|--------|
+| AI Usage Dashboard | ✅ Complete | ❌ Missing | 🟢 Low | 2 days |
+| Diagram Generation | ✅ Complete | ❌ Missing | 🟢 Low | 3 days |
 
-### 🚧 Blocked Features (Both Platforms)
+### 🚧 Both Platforms TODO
 
-| Feature | Blocker | Action Required |
-|---------|---------|-----------------|
-| User Authentication | bcrypt library bug | Fix backend bcrypt |
-| User-Specific Data | Authentication | Fix auth first |
-| Pattern Sharing | Authentication + API | Fix auth, build API |
+| Feature | Priority | Effort | Notes |
+|---------|----------|--------|-------|
+| Image Reordering | 🟠 High | 2 days | Choose thumbnail |
+| Pattern Sharing | 🟡 Medium | 1 week | Public/private, import |
+| Advanced Diagrams | 🟢 Low | 2 weeks | Amigurumi, garment |
+| Biometric Auth (iOS) | 🟡 Medium | 2 days | Face ID/Touch ID |
+| PWA/Offline (Web) | 🟡 Medium | 1 week | Service workers |
+| Apple Watch (iOS) | 🟢 Low | 2 weeks | Stitch counter |
+| Widgets (iOS) | 🟢 Low | 1 week | Home screen widgets |
 
 ---
 
-## 🎯 Page 6: Project Roadmap
+## 🎯 Page 6: Project Roadmap - UPDATED
 
-### Current Sprint: Backend Integration (October 2025)
-✅ **COMPLETE**
+### October 2025 - iOS Feature Parity Sprint ✅ COMPLETE
 
 **Completed**:
-- iOS Pattern/Project integration
-- Backend API without auth requirement
-- Documentation updates
+- ✅ Authentication system (Argon2 migration)
+- ✅ AI Chat with multimodal support
+- ✅ Pattern creation AI assistant
+- ✅ PDF support with conversion
+- ✅ Image persistence fixes
+- ✅ Optimized image viewer
 
-### Next Sprint: Authentication & Chat
+### November 2025 - Web Catch-Up Sprint 📋 PLANNED
 
-**Phase 1: Fix Authentication** 🔴 CRITICAL
-- [ ] Fix bcrypt library on OCI server
-- [ ] Re-enable auth checks in backend
-- [ ] Re-enable auth in iOS app
-- [ ] Implement auth UI on web app
-- [ ] End-to-end testing
-- **Estimated**: 3-4 days
-- **Blocking**: All user-specific features
+**Goals**: Port iOS-exclusive features to web
 
-**Phase 2: iOS AI Chat** (After auth fixed)
-- [ ] Port chat interface to SwiftUI
-- [ ] Integrate Gemini API
-- [ ] Chat history persistence
-- [ ] Testing with all 4 models
-- **Estimated**: 3-4 days
-- **Depends on**: Authentication (optional but recommended)
+**Week 1-2** (Nov 1-14):
+- [ ] Pull-to-refresh on pattern/project lists
+- [ ] PDF upload and conversion
+- [ ] Pattern AI Assistant dedicated UI
+- [ ] Multimodal image analysis integration
 
-### Future Sprints
+**Week 3-4** (Nov 15-30):
+- [ ] Chat image tap-to-enlarge
+- [ ] Auto-save pattern images from AI
+- [ ] Dark mode support
+- [ ] Image reordering (both platforms)
 
-**Sprint: Media Features**
-- [ ] iOS YouTube integration
-- [ ] iOS image viewer (zoom/pan)
-- [ ] Web pull-to-refresh
-- [ ] Web dark mode
-- **Estimated**: 1-2 weeks
+### December 2025 - Advanced Features Sprint
 
-**Sprint: Pattern Sharing**
-- [ ] Backend sharing API
-- [ ] Public pattern browsing
-- [ ] Import/export patterns
-- [ ] Favorites system
-- **Estimated**: 2 weeks
+**Week 1-2** (Dec 1-14):
+- [ ] Pattern sharing system (both platforms)
+- [ ] Biometric auth (iOS)
+- [ ] PWA support (Web)
 
-**Sprint: Advanced Diagrams**
-- [ ] Amigurumi chart generation
-- [ ] Garment pattern charts
-- [ ] Complex stitch patterns
-- [ ] Interactive diagram editor
-- **Estimated**: 3-4 weeks
+**Week 3-4** (Dec 15-31):
+- [ ] AI Usage Dashboard (iOS)
+- [ ] Diagram generation (iOS)
+- [ ] Performance optimization (both)
+
+### January 2026 - App Store Prep & Launch
+
+- [ ] TestFlight beta testing
+- [ ] App Store assets (screenshots, icons, descriptions)
+- [ ] Final bug fixes
+- [ ] App Store submission
+- [ ] Public launch 🎉
 
 ---
 
-## 🔍 Page 7: Technical Documentation
+## 🔍 Page 7: Technical Documentation - UPDATED
 
 ### iOS Implementation Details
 
@@ -359,75 +387,112 @@ Copy and paste these sections into your Notion workspace.
 - Custom implementation using URLSession
 - No Apollo codegen required
 - Location: `Services/GraphQL/GraphQLClient.swift`
-- Auth token auto-attached when available
+- Auth token from UserDefaults (TODO: migrate to Keychain)
 
 **Pattern vs Project Architecture**
 Both use same backend `CrochetProject` table, filtered by `notes`:
-- **Patterns**: `notes == null` (templates)
+- **Patterns**: `notes == null` (reusable templates)
 - **Projects**: `notes != null` (active work)
+
+**Image Handling Pipeline** (Oct 8, 2025):
+```
+UIImage → JPEG compression (0.8 quality, 1920px max)
+       → Base64 encoding
+       → JSON array ["base64str1", "base64str2"]
+       → GraphQL mutation
+       → Backend storage
+       → Retrieval as JSON array
+       → Base64 decoding
+       → UIImage caching in memory
+```
+
+**PDF Support**:
+- `PDFDocument(data:)` instead of `PDFDocument(url:)` for security-scoped resources
+- `UIGraphicsImageRenderer` for page-to-image conversion
+- Each page becomes a separate image
+- Works on both simulator and real device
+
+**Multimodal AI**:
+- Images sent as base64 JSON array in `imageData` parameter
+- Backend converts to `types.Part.from_bytes()`
+- Gemini 2.5 Pro model for image analysis
+- System prompts enforce NAME:/NOTATION:/INSTRUCTIONS: format
 
 **Important**: Use native Swift dictionaries for GraphQL variables
 ```swift
 // ✅ CORRECT
-var input: [String: Any?] = ["name": name, "patternText": pattern]
-let variables: [String: Any] = ["input": input]
+let variables: [String: Any] = [
+    "input": [
+        "title": title,
+        "imageData": imageService.imagesToJSON(images: images)
+    ]
+]
 
 // ❌ WRONG - causes "Invalid type in JSON write"
-let input = CreateProjectInput(name: name, pattern: pattern)
+let input = CreateProjectInput(...)
 let variables = ["input": try JSONEncoder().encode(input)]
 ```
 
 ### Backend Architecture
 
-**Multi-Model AI System**
-- Gemini 2.5 Pro: 100 requests/day (complex queries)
-- Gemini 2.5 Flash Preview: 250 requests/day (latest features)
+**Authentication Flow** (Argon2):
+```
+1. User registers → Password hashed with Argon2
+2. Hash stored in users table
+3. User logs in → Password verified with Argon2
+4. JWT token generated (expires 7 days)
+5. Token sent to client
+6. Client includes token in Authorization header
+7. Backend validates token on each request
+```
+
+**Multi-Model AI System**:
+- Gemini 2.5 Pro: 100 requests/day (complex + images)
+- Gemini 2.5 Flash Preview: 250 requests/day (latest)
 - Gemini 2.5 Flash: 400 requests/day (balanced)
-- Gemini 2.5 Flash-Lite: 1,000 requests/day (simple queries)
+- Gemini 2.5 Flash-Lite: 1,000 requests/day (simple)
 - **Total**: 1,600 requests/day
 
-**Diagram Generation**
-- Primary: matplotlib (professional charts)
-- Secondary: SVG generators (granny squares)
-- Output: Base64 PNG + SVG
+**Image Processing**:
+- Accepts base64 JSON array from clients
+- Converts to `types.Part.from_bytes()` for Gemini
+- Stores as JSON in PostgreSQL `text` field
+- Returns as JSON array to clients
 
-### Common Issues & Solutions
+### Known Issues & Workarounds
 
-**iOS: "Authentication required" error**
-- **Status**: Expected - auth is disabled
-- **Solution**: Wait for backend bcrypt fix
+**iOS Layout Bug** (Oct 8, 2025)
+- **Issue**: Instructions render under title after adding images
+- **Workaround**: Restart app
+- **Status**: Active investigation, 6 approaches tried
+- **Details**: See CLAUDE.md "Known Issues & Debugging Notes"
 
-**iOS: "Invalid type in JSON write"**
-- **Cause**: Using JSONEncoder on structs for variables
-- **Solution**: Use native dictionaries (see above)
-
-**Web: CORS errors**
-- **Cause**: Origin not in CORS_ORIGINS
-- **Solution**: Update `.env` on OCI server, restart backend
-
-**Backend: bcrypt errors**
-- **Status**: Known bug on production
-- **Solution**: Update bcrypt library (see roadmap)
+**JWT Token Storage** (TODO)
+- **Current**: UserDefaults (works but not ideal)
+- **Should be**: Keychain (more secure)
+- **Priority**: Medium
 
 ### Deployment Procedures
 
-**iOS** (Not yet released)
+**iOS** (TestFlight):
 1. Update version in Xcode
 2. Archive build
 3. Upload to TestFlight
 4. Submit for review
+5. Distribute to testers
 
-**Web** (Auto-deploy)
+**Web** (Vercel Auto-deploy):
 1. Push to `main` branch
 2. Vercel auto-deploys
 3. Check deployment logs
+4. Verify at https://crookedfinger.chandlerhardy.com
 
-**Backend**
-1. SSH to OCI: `ssh ubuntu@150.136.38.166 -i ~/.ssh/ampere.key`
-2. Update code: `cd /home/ubuntu/crooked-finger && git pull`
-3. Rebuild: `docker-compose -f docker-compose.backend.yml build backend`
+**Backend** (Docker on OCI):
+1. SSH: `ssh ubuntu@150.136.38.166 -i ~/.ssh/ampere.key`
+2. Pull: `cd /home/ubuntu/crooked-finger && git pull`
+3. Build: `docker-compose -f docker-compose.backend.yml build backend`
 4. Deploy: `docker-compose -f docker-compose.backend.yml up -d backend`
-5. Check logs: `docker-compose -f docker-compose.backend.yml logs -f backend`
+5. Logs: `docker-compose -f docker-compose.backend.yml logs -f backend`
 
 ---
 
@@ -436,66 +501,82 @@ let variables = ["input": try JSONEncoder().encode(input)]
 Create a Notion database with these properties:
 
 **Properties:**
-- **Task** (Title): Task name
+- **Task** (Title)
 - **Platform** (Multi-select): iOS, Web, Backend, Both
 - **Status** (Select): 📋 To Do, ⚠️ In Progress, ✅ Done, 🚧 Blocked
 - **Priority** (Select): 🔴 Critical, 🟠 High, 🟡 Medium, 🟢 Low
-- **Effort** (Select): 1 day, 2-3 days, 1 week, 2+ weeks
-- **Blocker** (Text): What's blocking this task
-- **Sprint** (Select): Current, Next, Future
-- **Assignee** (Person): Who's working on it
-- **Notes** (Text): Additional details
+- **Effort** (Select): Hours, 1 day, 2-3 days, 1 week, 2+ weeks
+- **Sprint** (Select): October, November, December, Backlog
+- **Notes** (Text)
 
-**Example Entries:**
+**Current High-Priority Tasks** (October 8, 2025):
 
-| Task | Platform | Status | Priority | Effort | Blocker |
-|------|----------|--------|----------|--------|---------|
-| Fix bcrypt library | Backend | 📋 To Do | 🔴 Critical | 1 day | - |
-| Re-enable iOS auth | iOS | 🚧 Blocked | 🟠 High | 1 day | bcrypt fix |
-| Add web auth UI | Web | 🚧 Blocked | 🟠 High | 2-3 days | bcrypt fix |
-| Port AI chat to iOS | iOS | 📋 To Do | 🟠 High | 2-3 days | - |
-| YouTube on iOS | iOS | 📋 To Do | 🟡 Medium | 2 days | - |
-| Image viewer iOS | iOS | 📋 To Do | 🟡 Medium | 2-3 days | - |
-| Pattern sharing API | Backend | 📋 To Do | 🟡 Medium | 2-3 days | Auth fix |
-| Web dark mode | Web | 📋 To Do | 🟡 Medium | 2 days | - |
-| Web pull-to-refresh | Web | 📋 To Do | 🟡 Medium | 1 day | - |
+| Task | Platform | Status | Priority | Effort | Sprint |
+|------|----------|--------|----------|--------|--------|
+| Fix layout bug (PatternDetailView) | iOS | ⚠️ In Progress | 🟠 High | 2-3 days | October |
+| Add image reordering | Both | 📋 To Do | 🟠 High | 2-3 days | October |
+| Port PDF support to web | Web | 📋 To Do | 🟠 High | 2 days | November |
+| Port pull-to-refresh to web | Web | 📋 To Do | 🟠 High | 1 day | November |
+| Port Pattern AI Assistant UI to web | Web | 📋 To Do | 🟠 High | 2-3 days | November |
+| Add multimodal AI to web | Web | 📋 To Do | 🟠 High | 2 days | November |
+| Migrate iOS tokens to Keychain | iOS | 📋 To Do | 🟡 Medium | 1 day | November |
+| Add dark mode to web | Web | 📋 To Do | 🟡 Medium | 2 days | November |
+| AI Usage Dashboard on iOS | iOS | 📋 To Do | 🟢 Low | 2 days | December |
 
 ---
 
 ## 📅 Page 9: Development Log
 
-Create a Notion database to track daily development sessions:
+**Recent Major Sessions:**
 
-**Properties:**
-- **Date** (Date): Session date
-- **Platform** (Multi-select): iOS, Web, Backend, Both
-- **Summary** (Title): Brief description
-- **Details** (Text): Full session notes
-- **Commits** (Text): Commit hashes
-- **Status** (Select): ✅ Deployed, 🚧 In Progress, 📋 Documented
+### October 8, 2025 - Multimodal AI & Image Persistence
+**Platform**: Both (iOS + Backend)
+**Status**: ✅ Deployed
 
-**Recent Entries:**
+**iOS Improvements**:
+- Fixed critical image persistence bug (combine existing + new images)
+- Added MediaPickerView to pattern/project detail views
+- Fixed PDF security-scoped resource access on device
+- Optimized Base64ImageViewer with separate ZoomableImageView
+- Added tap-to-enlarge for chat images
+- Pattern images from AI auto-saved to gallery
+- Improved title extraction with more header variations
 
-### October 7, 2025 - UI Polish & Backend Improvements
+**Backend Improvements**:
+- Added `image_data` parameter to chatWithAssistantEnhanced
+- Implemented types.Part.from_bytes() for Gemini SDK
+- Enhanced pattern extraction prompts
+
+**Commits**:
+- iOS: `28a5bbc`, `2f4fbcc`, `5db6d1a`
+- Backend: `05af74f4`
+
+**Known Issue Discovered**:
+- Layout bug in PatternDetailView (instructions under title)
+- Documented in CLAUDE.md with 6 attempted fixes
+
+### October 4, 2025 - Authentication Complete
 **Platform**: Both
 **Status**: ✅ Deployed
+
+- Migrated backend from bcrypt to Argon2
+- Fixed GraphQL context_getter db session
+- iOS login/register/logout fully functional
+- JWT token management working
+
 **Commits**:
-- Backend: `d535ab54`, `f101a15d`
-- iOS: `8d6cbab`, `8658f0f`
+- Backend: Multiple commits for Argon2 migration
+- iOS: Auth UI and flow implementation
 
-**Backend Improvements:**
-- Fixed YouTube pattern parsing with improved regex (lookahead patterns)
-- Fixed instruction duplication bug
-- Fixed title overflow issue (entire pattern in NAME field)
-- Added conversation_id filtering to chatMessages query
-- Added AIModelConfig database model for persisting AI settings
+### October 3, 2025 - AI Chat Integration
+**Platform**: iOS
+**Status**: ✅ Deployed
 
-**iOS Improvements:**
-- Added notation/instructions toggle for patterns
-- Reduced spacing in project detail view
-- Optimized image gallery padding
-- Updated CLAUDE.md with recent improvements
+- Full chat interface with Gemini integration
+- Multi-model support
+- Markdown rendering
+- Chat history and project-specific conversations
 
 ---
 
-Copy these sections into Notion and customize as needed!
+Copy these updated sections into Notion. The feature parity gap has narrowed significantly - iOS is now ahead in several areas and it's time to port those features back to web!

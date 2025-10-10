@@ -395,32 +395,6 @@ enum APIConfig {
 }
 ```
 
-**Issue**: Production backend IP (150.136.38.166) is temporarily blocked by YouTube due to testing. Local backend works fine.
-
-**Root Cause**: We made ~20 transcript requests in 30 minutes during iOS app testing/debugging on Oct 5, 2025. This triggered YouTube's anti-scraping detection since we're using the unofficial `youtube-transcript-api` library (scraping, not official API).
-
-**Why We Can't Use Official API**: YouTube Data API v3 captions.download requires "permission to edit the video" - only works for videos you own. We need to access random crochet tutorial videos from other creators.
-
-**Workaround**:
-- iOS app (DEBUG builds) temporarily points to local backend via `currentGraphqlURL = localGraphqlURL`
-- iOS app includes "Open in Safari" button to use web app's YouTube transcript page when backend is blocked
-- Production web app also blocked until backend IP clears
-
-**Testing Timeline**:
-- ⏳ **Oct 7, 2025**: Test production backend ONCE to see if block cleared (wait 48 hours minimum)
-- ⏳ **Oct 9, 2025**: If still blocked, test once more (wait another 48 hours)
-- ⚠️ **IMPORTANT**: Do NOT test repeatedly while blocked - this may extend the block duration
-
-**Long-term Solutions** (if block persists beyond Oct 9):
-1. HTTP/SOCKS proxy service with rotating IPs (backend already has `YOUTUBE_PROXY_URL` support)
-2. Deploy backend on fresh OCI instance with new IP
-3. VPN on server (complex - requires split-tunneling to not break incoming traffic)
-
-**TODO**:
-1. After block clears, revert `currentGraphqlURL` back to `graphqlURL` for production backend
-2. Consider keeping Safari button permanently as user fallback option
-3. Document that concentrated testing (>10 requests/hour) will trigger YouTube blocks
-
 ## Dependencies (Swift Package Manager)
 - **Apollo iOS** - GraphQL client
 - **Kingfisher** - Image caching

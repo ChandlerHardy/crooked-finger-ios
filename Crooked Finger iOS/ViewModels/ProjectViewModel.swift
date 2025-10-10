@@ -189,6 +189,14 @@ class ProjectViewModel {
 
             // Update local project
             if let index = projects.firstIndex(where: { $0.backendId == projectId }) {
+                // Parse imageData JSON into images array
+                var updatedImages: [String] = []
+                if let imageDataJSON = response.updateProject.imageData,
+                   let jsonData = imageDataJSON.data(using: .utf8),
+                   let imageArray = try? JSONDecoder().decode([String].self, from: jsonData) {
+                    updatedImages = imageArray
+                }
+
                 projects[index] = Project(
                     id: projects[index].id,
                     name: response.updateProject.name,
@@ -197,6 +205,7 @@ class ProjectViewModel {
                     translatedInstructions: response.updateProject.translatedText,
                     status: response.updateProject.isCompleted ? .completed : projects[index].status,
                     difficulty: mapDifficulty(response.updateProject.difficultyLevel),
+                    images: updatedImages,
                     notes: response.updateProject.notes,
                     isFavorite: projects[index].isFavorite,
                     backendId: response.updateProject.id

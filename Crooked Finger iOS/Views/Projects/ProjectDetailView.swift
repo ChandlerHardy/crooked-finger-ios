@@ -291,130 +291,134 @@ struct ProjectDetailView: View {
                     .focused($isPatternFocused)
             } else if patternViewMode == 2 {
                 // Counter View
-                VStack(spacing: 20) {
-                    // Stitch Counter
-                    VStack(spacing: 12) {
-                        Text("Stitches")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(Color.appMuted)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(spacing: 0) {
+                    VStack(spacing: 20) {
+                        // Stitch Counter
+                        VStack(spacing: 12) {
+                            Text("Stitches")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(Color.appMuted)
+                                .frame(maxWidth: .infinity, alignment: .leading)
 
-                        HStack(spacing: 12) {
-                            Text("\(stitchCount)")
-                                .font(.system(size: 44, weight: .bold, design: .rounded))
-                                .foregroundStyle(Color.appText)
-                                .frame(width: 100, alignment: .center)
-                                .monospacedDigit()
+                            HStack(spacing: 12) {
+                                Text("\(stitchCount)")
+                                    .font(.system(size: 44, weight: .bold, design: .rounded))
+                                    .foregroundStyle(Color.appText)
+                                    .frame(width: 100, alignment: .center)
+                                    .monospacedDigit()
 
-                            Spacer()
+                                Spacer()
 
-                            Button {
-                                stitchCount = max(0, stitchCount - 1)
-                            } label: {
-                                Image(systemName: "minus")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundStyle(.white)
-                                    .frame(width: 50, height: 50)
-                                    .background(Circle().fill(Color.appMuted))
-                            }
+                                Button {
+                                    stitchCount = max(0, stitchCount - 1)
+                                } label: {
+                                    Image(systemName: "minus")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                        .frame(width: 50, height: 50)
+                                        .background(Circle().fill(Color.appMuted))
+                                }
 
-                            Button {
-                                stitchCount += 1
-                            } label: {
-                                Image(systemName: "plus")
-                                    .font(.system(size: 20, weight: .semibold))
-                                    .foregroundStyle(.white)
-                                    .frame(width: 65, height: 65)
-                                    .background(Circle().fill(Color.primaryBrown))
-                            }
+                                Button {
+                                    stitchCount += 1
+                                } label: {
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 20, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                        .frame(width: 65, height: 65)
+                                        .background(Circle().fill(Color.primaryBrown))
+                                }
 
-                            Button {
-                                stitchCount += 10
-                            } label: {
-                                Text("+10")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(.white)
-                                    .frame(width: 50, height: 50)
-                                    .background(Circle().fill(Color.primaryBrown.opacity(0.7)))
-                            }
-                        }
-                    }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-
-                    // Row Counter
-                    VStack(spacing: 12) {
-                        Text("Rows")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(Color.appMuted)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-
-                        HStack(spacing: 12) {
-                            Text("\(rowCount)")
-                                .font(.system(size: 44, weight: .bold, design: .rounded))
-                                .foregroundStyle(Color.appText)
-                                .frame(width: 100, alignment: .center)
-                                .monospacedDigit()
-
-                            Spacer()
-
-                            Button {
-                                rowCount = max(0, rowCount - 1)
-                            } label: {
-                                Image(systemName: "minus")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundStyle(.white)
-                                    .frame(width: 50, height: 50)
-                                    .background(Circle().fill(Color.appMuted))
-                            }
-
-                            Button {
-                                rowCount += 1
-                            } label: {
-                                Image(systemName: "plus")
-                                    .font(.system(size: 20, weight: .semibold))
-                                    .foregroundStyle(.white)
-                                    .frame(width: 65, height: 65)
-                                    .background(Circle().fill(Color.primaryBrown))
-                            }
-
-                            Button {
-                                rowCount += 10
-                            } label: {
-                                Text("+10")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(.white)
-                                    .frame(width: 50, height: 50)
-                                    .background(Circle().fill(Color.primaryBrown.opacity(0.7)))
+                                Button {
+                                    stitchCount += 10
+                                } label: {
+                                    Text("+10")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                        .frame(width: 50, height: 50)
+                                        .background(Circle().fill(Color.primaryBrown.opacity(0.7)))
+                                }
                             }
                         }
-                    }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                    // Reset button
-                    Button {
-                        stitchCount = 0
-                        rowCount = 0
-                    } label: {
-                        HStack {
-                            Image(systemName: "arrow.counterclockwise")
-                            Text("Reset Counters")
+                        // Row Counter
+                        VStack(spacing: 12) {
+                            Text("Rows")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(Color.appMuted)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                            HStack(spacing: 12) {
+                                Text("\(rowCount)")
+                                    .font(.system(size: 44, weight: .bold, design: .rounded))
+                                    .foregroundStyle(Color.appText)
+                                    .frame(width: 100, alignment: .center)
+                                    .monospacedDigit()
+
+                                Spacer()
+
+                                Button {
+                                    rowCount = max(0, rowCount - 1)
+                                } label: {
+                                    Image(systemName: "minus")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                        .frame(width: 50, height: 50)
+                                        .background(Circle().fill(Color.appMuted))
+                                }
+
+                                Button {
+                                    rowCount += 1
+                                } label: {
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 20, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                        .frame(width: 65, height: 65)
+                                        .background(Circle().fill(Color.primaryBrown))
+                                }
+
+                                Button {
+                                    rowCount += 10
+                                } label: {
+                                    Text("+10")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                        .frame(width: 50, height: 50)
+                                        .background(Circle().fill(Color.primaryBrown.opacity(0.7)))
+                                }
+                            }
                         }
-                        .font(.subheadline)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.primaryBrown)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                        // Reset button
+                        Button {
+                            stitchCount = 0
+                            rowCount = 0
+                        } label: {
+                            HStack {
+                                Image(systemName: "arrow.counterclockwise")
+                                Text("Reset Counters")
+                            }
+                            .font(.subheadline)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color.primaryBrown)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                        }
+
+                        Spacer()
                     }
+                    .frame(height: 492)
                 }
                 .padding(.horizontal)
-                .padding(.bottom, 20)
             } else {
                 // Notation or Instructions View
                 let displayText = patternViewMode == 0 ? project.pattern : (project.translatedInstructions ?? project.pattern)
@@ -449,7 +453,7 @@ struct ProjectDetailView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding()
                         }
-                        .frame(maxHeight: .infinity)
+                        .frame(height: patternViewMode == 0 ? 492 : 470)
                         .background(Color(.systemGray6))
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .padding(.horizontal)

@@ -21,7 +21,7 @@ struct HomeView: View {
     private var recentConversations: [Conversation] {
         // Sort by most recent and filter out empty conversations
         let sorted = chatViewModel.conversations
-            .filter { !$0.messages.isEmpty }
+            .filter { $0.messageCount > 0 }
             .sorted { $0.updatedAt > $1.updatedAt }
         return Array(sorted.prefix(3))
     }
