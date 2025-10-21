@@ -505,6 +505,65 @@ See Notion Projects database for detailed phase breakdowns:
    - Professional app icon design
    - Polished first-launch experience
 
+### October 13, 2025 - Web App AI Model Configuration & Cross-Platform Standardization
+1. **Web App - AI Model Configuration Backend Sync**
+   - Web `AIModelSelector` component now syncs with backend via GraphQL `setAiModel` mutation
+   - Added model ID to backend name mapping (e.g., 'openrouter-qwen' → 'qwen/qwen3-30b-a3b:free')
+   - Configuration syncs on component mount and on every change
+   - Smart routing mode: passes `modelName: null` with priority order for complexity-based routing
+   - Single model mode: passes specific model name with fallback chain
+   - **Cross-Platform Impact**: iOS should eventually implement similar backend sync for consistency
+
+2. **Web App - Fallback Order Reordering**
+   - Added up/down arrow buttons to reorder fallback models
+   - Users can customize which models to try first after primary fails
+   - Visual hint: "Click arrows to reorder"
+   - Buttons disabled at boundaries (first/last items)
+   - **Cross-Platform Impact**: iOS could implement similar drag-to-reorder UI in Settings
+
+3. **Web App - Smart Primary Model Management**
+   - When primary model changes, it automatically moves to top of fallback order
+   - Ensures primary model is always first in fallback chain
+   - Default fallback order now includes Qwen as first item:
+     `['openrouter-qwen', 'openrouter-deepseek', 'gemini-pro', 'gemini-flash-preview', 'gemini-flash', 'gemini-flash-lite']`
+   - **Cross-Platform Impact**: iOS and web both use same 6-model system
+
+4. **Web App - Multimodal Image Format Standardization**
+   - Fixed: Web now sends images as JSON string (matching iOS implementation)
+   - GraphQL mutation changed from `$imageData: [String!]` to `$imageData: String`
+   - Web extracts base64 data from data URLs: `img.split(',')[1]`
+   - Both platforms now send: `JSON.stringify(base64ImagesArray)`
+   - **Cross-Platform Impact**: Standardized image upload format across web and iOS
+
+5. **Web App - Apollo Client Direct Calls**
+   - Replaced `useMutation` hook with direct `apolloClient.mutate()` calls
+   - Fixed Next.js Turbopack module resolution issues
+   - More reliable for configuration syncing
+   - **iOS Note**: iOS already uses this pattern with custom URLSession-based GraphQL client
+
+### Technical Details (Web App Changes):
+**Files Modified:**
+- `frontend/src/lib/graphql/mutations.ts` - Added SET_AI_MODEL mutation
+- `frontend/src/components/AIModelSelector.tsx` - Backend sync + reordering UI
+- `frontend/src/app/page.tsx` - Fixed image data format for multimodal AI
+
+**Model ID Mappings (Frontend → Backend):**
+```typescript
+'openrouter-qwen' → 'qwen/qwen3-30b-a3b:free'
+'openrouter-deepseek' → 'deepseek/deepseek-chat-v3.1:free'
+'gemini-pro' → 'gemini-2.5-pro'
+'gemini-flash-preview' → 'gemini-2.5-flash-preview-09-2025'
+'gemini-flash' → 'gemini-2.5-flash'
+'gemini-flash-lite' → 'gemini-2.5-flash-lite'
+```
+
+**What These Changes Fix:**
+- ✅ AI model selection now properly respected on web (was only localStorage, not synced)
+- ✅ No more duplicate model prefixes in responses (e.g., `[gemini-2.5-flash-preview-09-2025] [gemini-2.5-flash]`)
+- ✅ Smart routing toggle works correctly (backend now knows when to use complexity-based routing)
+- ✅ Multimodal image support now works on web (GraphQL type mismatch resolved)
+- ✅ Web and iOS send identical image data format (cross-platform consistency)
+
 ### October 6, 2025 - YouTube & Content Management
 1. **YouTube Transcript Integration** (`9faf812`)
    - Re-enabled YouTube pattern extraction using RapidAPI
@@ -524,4 +583,4 @@ See Notion Projects database for detailed phase breakdowns:
    - Cleaner pattern/project descriptions
 
 ---
-*Last Updated: October 7, 2025*
+*Last Updated: October 13, 2025*
