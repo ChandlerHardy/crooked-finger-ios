@@ -27,6 +27,7 @@ struct ProjectDetailView: View {
     @State private var patternViewMode = 0 // 0: Notation, 1: Instructions, 2: Counter
     @State private var stitchCount = 0
     @State private var rowCount = 0
+    @State private var savedScrollPosition: CGPoint = .zero
     @Environment(\.dismiss) var dismiss
     @FocusState private var isPatternFocused: Bool
     @FocusState private var isNotesFocused: Bool
@@ -485,7 +486,7 @@ struct ProjectDetailView: View {
 
             // Chat interface
             if let chatVM = projectChatViewModel {
-                ProjectChatView(viewModel: chatVM)
+                ProjectChatView(viewModel: chatVM, project: project)
             } else {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -709,8 +710,13 @@ struct ProjectDetailView: View {
 // MARK: - Project Chat View
 struct ProjectChatView: View {
     @Bindable var viewModel: ChatViewModel
+    let project: Project
     @State private var messageText = ""
     @State private var scrollProxy: ScrollViewProxy?
+    @State private var showMediaPicker = false
+    @State private var selectedImages: [UIImage] = []
+    @State private var attachedImages: [UIImage] = []
+    @State private var isSending = false
     @FocusState private var isInputFocused: Bool
 
     var body: some View {
@@ -755,28 +761,99 @@ struct ProjectChatView: View {
                 }
             }
 
-            // Input Area
+            // Error message
+            if let error = viewModel.errorMessage {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle")
+                        .foregroundStyle(.orange)
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Dismiss") {
+                        viewModel.errorMessage = nil
+                    }
+                    .font(.caption)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .background(Color.orange.opacity(0.1))
+            }
+
+            // Image Attachments Preview
+            if !attachedImages.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(Array(attachedImages.enumerated()), id: \.offset) { index, image in
+                            ZStack(alignment: .topTrailing) {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 60, height: 60)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                                Button {
+                                    attachedImages.remove(at: index)
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.white)
+                                        .background(Circle().fill(Color.black.opacity(0.6)))
+                                }
+                                .offset(x: 5, y: -5)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                }
+                .background(Color.appCard)
+            }
+
+            // Input Area - Claude-style integrated bar
             HStack(spacing: 12) {
+                // Left side buttons
+                HStack(spacing: 16) {
+                    // Attachment button
+                    Button {
+                        showMediaPicker = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.title3)
+                            .fontWeight(.medium)
+                            .foregroundStyle(Color.appMuted)
+                    }
+                }
+
+                // Text input
                 TextField("Ask about this project", text: $messageText, axis: .vertical)
                     .textFieldStyle(.plain)
                     .font(.body)
                     .lineLimit(1...5)
+                    .autocorrectionDisabled(false)
+                    .textInputAutocapitalization(.sentences)
+                    .submitLabel(.return)
                     .focused($isInputFocused)
                     .onSubmit {
                         sendMessage()
                     }
 
-                Button(action: sendMessage) {
-                    Image(systemName: "arrow.up")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 32, height: 32)
-                        .background(
-                            Circle()
-                                .fill(messageText.isEmpty ? Color.appMuted : Color.primaryBrown)
-                        )
+                Spacer()
+
+                // Right side buttons
+                HStack(spacing: 12) {
+                    // Send button
+                    Button(action: sendMessage) {
+                        Image(systemName: "arrow.up")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 32, height: 32)
+                            .background(
+                                Circle()
+                                    .fill(messageText.isEmpty && attachedImages.isEmpty && !isSending ? Color.appMuted : Color.primaryBrown)
+                            )
+                    }
+                    .disabled((messageText.isEmpty && attachedImages.isEmpty && !isSending) || viewModel.isLoading)
                 }
-                .disabled(messageText.isEmpty || viewModel.isLoading)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -791,17 +868,53 @@ struct ProjectChatView: View {
             .padding(.horizontal)
             .padding(.bottom, 8)
         }
+        .sheet(isPresented: $showMediaPicker) {
+            MediaPickerView(selectedImages: $selectedImages)
+        }
+        .onChange(of: selectedImages) { _, newImages in
+            if !newImages.isEmpty {
+                attachedImages.append(contentsOf: newImages)
+                selectedImages = []
+            }
+        }
     }
 
     private func sendMessage() {
-        guard !messageText.isEmpty else { return }
+        guard !messageText.isEmpty || !attachedImages.isEmpty else { return }
+
+        // Haptic feedback on send
+        Haptics.impact(.light)
+
+        isSending = true
 
         let text = messageText
+        let images = attachedImages
+
+        // Clear input and dismiss keyboard immediately
         messageText = ""
+        attachedImages = []
         isInputFocused = false
 
+        // Build project context for AI
+        let projectContext = """
+        ACTIVE CROCHET PROJECT CONTEXT:
+        Project Name: \(project.name)
+        Description: \(project.description)
+        Status: \(project.status.rawValue)
+        Difficulty: \(project.difficulty.rawValue)
+
+        PATTERN NOTATION:
+        \(project.pattern)
+
+        \(project.translatedInstructions != nil ? "PLAIN ENGLISH INSTRUCTIONS:\n\(project.translatedInstructions!)\n" : "")
+        \(project.notes != nil && !project.notes!.isEmpty ? "PROJECT NOTES:\n\(project.notes!)\n" : "")
+
+        The user is asking a question about THIS specific project. Use the context above to provide relevant, project-specific advice.
+        """
+
         Task {
-            await viewModel.sendMessage(text, images: [])
+            await viewModel.sendMessage(text, images: images, projectContext: projectContext, projectId: project.backendId)
+            isSending = false
         }
     }
 }

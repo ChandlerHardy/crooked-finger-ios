@@ -14,13 +14,14 @@ class GraphQLClient {
 
     private let endpoint: URL
     private let session: URLSession
+    private let secureStorage = SecureStorageService.shared
     var authToken: String? {
         didSet {
-            // Save to UserDefaults when token changes
+            // Save to secure storage when token changes
             if let token = authToken {
-                UserDefaults.standard.set(token, forKey: "authToken")
+                _ = secureStorage.saveString(token, forKey: "authToken")
             } else {
-                UserDefaults.standard.removeObject(forKey: "authToken")
+                _ = secureStorage.delete(forKey: "authToken")
             }
         }
     }
@@ -28,8 +29,8 @@ class GraphQLClient {
     private init() {
         self.endpoint = URL(string: APIConfig.currentGraphqlURL)!
         self.session = URLSession.shared
-        // Load saved token
-        self.authToken = UserDefaults.standard.string(forKey: "authToken")
+        // Load saved token from secure storage
+        self.authToken = secureStorage.loadString(forKey: "authToken")
     }
 
     /// Execute a GraphQL query or mutation

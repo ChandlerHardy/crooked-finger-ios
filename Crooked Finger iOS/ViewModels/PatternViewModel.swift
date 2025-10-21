@@ -22,6 +22,19 @@ class PatternViewModel {
         Task {
             await fetchPatterns()
         }
+        
+        // Listen for authentication state changes
+        NotificationCenter.default.addObserver(
+            forName: .authStateChanged,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            if let isAuthenticated = notification.object as? Bool, isAuthenticated {
+                Task {
+                    await self?.fetchPatterns()
+                }
+            }
+        }
     }
 
     // MARK: - Fetch Patterns
@@ -358,5 +371,11 @@ class PatternViewModel {
         default:
             return .beginner
         }
+    }
+    
+    // MARK: - Refresh Methods
+    
+    func refreshPatterns() async {
+        await fetchPatterns()
     }
 }

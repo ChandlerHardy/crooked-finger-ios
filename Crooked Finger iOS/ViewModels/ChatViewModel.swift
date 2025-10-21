@@ -88,7 +88,7 @@ class ChatViewModel {
     }
 
     // Send a message to the AI assistant
-    func sendMessage(_ text: String, images: [UIImage] = []) async {
+    func sendMessage(_ text: String, images: [UIImage] = [], projectContext: String? = nil, projectId: Int? = nil) async {
         // Convert images to base64 array for display
         var base64Images: [String]? = nil
         if !images.isEmpty {
@@ -119,14 +119,21 @@ class ChatViewModel {
                 imageData = imageService.imagesToJSON(images: images)
             }
 
-            // Call GraphQL mutation with conversation_id
+            // Build context string - use project context if provided, otherwise default
+            let contextString = projectContext ?? "crochet_pattern_assistant"
+
+            // Call GraphQL mutation with conversation_id and project_id
             var variables: [String: Any] = [
                 "message": text,
-                "context": "crochet_pattern_assistant"
+                "context": contextString
             ]
 
             if let backendId = currentConversation?.backendId {
                 variables["conversationId"] = backendId
+            }
+
+            if let projectId = projectId {
+                variables["projectId"] = projectId
             }
 
             if let imageData = imageData {

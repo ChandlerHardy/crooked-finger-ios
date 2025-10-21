@@ -10,7 +10,23 @@ import Foundation
 @MainActor
 @Observable
 class AuthViewModel {
-    var isAuthenticated = false
+    private var _isAuthenticated = false {
+        didSet {
+            if _isAuthenticated != oldValue {
+                Task { @MainActor in
+                    // Notify that auth state changed
+                    // This can be observed by other ViewModels to refresh their data
+                    NotificationCenter.default.post(name: .authStateChanged, object: _isAuthenticated)
+                }
+            }
+        }
+    }
+    
+    var isAuthenticated: Bool {
+        get { _isAuthenticated }
+        set { _isAuthenticated = newValue }
+    }
+    
     var currentUser: UserResponse?
     var isLoading = false
     var errorMessage: String?
@@ -19,7 +35,7 @@ class AuthViewModel {
 
     init() {
         // Check if we have a saved token
-        isAuthenticated = client.authToken != nil
+        _isAuthenticated = client.authToken != nil
     }
 
     // MARK: - Login

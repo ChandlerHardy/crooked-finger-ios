@@ -22,6 +22,19 @@ class ProjectViewModel {
         Task {
             await fetchProjects()
         }
+        
+        // Listen for authentication state changes
+        NotificationCenter.default.addObserver(
+            forName: .authStateChanged,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            if let isAuthenticated = notification.object as? Bool, isAuthenticated {
+                Task {
+                    await self?.fetchProjects()
+                }
+            }
+        }
     }
 
     // MARK: - Fetch Projects
@@ -273,5 +286,11 @@ class ProjectViewModel {
         default:
             return .beginner
         }
+    }
+    
+    // MARK: - Refresh Methods
+    
+    func refreshProjects() async {
+        await fetchProjects()
     }
 }
